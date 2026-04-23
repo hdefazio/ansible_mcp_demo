@@ -10,7 +10,7 @@ This demo includes two MCP servers:
 
 ## Prerequisites
 
-- Podman or Docker
+- Podman
 - ansible-builder
 - ansible-navigator
 - GitHub Personal Access Token (for GitHub MCP server)
@@ -38,6 +38,14 @@ ansible-galaxy collection build --output-path /path/to/ansible_mcp_demo/ee_build
 ### 2. Build the Execution Environment
 
 The execution environment includes both MCP servers and required Ansible collections.
+
+First, authenticate with the Red Hat registry:
+
+```bash
+podman login registry.redhat.io
+```
+
+Then build the execution environment:
 
 ```bash
 cd ee_build
