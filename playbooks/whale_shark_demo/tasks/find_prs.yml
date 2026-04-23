@@ -1,0 +1,24 @@
+---
+# ============================================================================
+# Find PRs Adrift (Search for stale pull requests)
+# ============================================================================
+- name: Find PRs adrift using GitHub MCP
+  ansible.mcp.run_tool:
+    name: search_pull_requests
+    args:
+      query: "repo:{{ repo_owner }}/{{ repo_name }} is:pr is:open -is:draft updated:<{{ threshold_date }}"
+  delegate_to: github-mcp-server
+  register: adrift_prs
+
+- name: Parse PR results
+  ansible.builtin.set_fact:
+    pr_list: "{{ adrift_prs.content | parse_mcp_json }}"
+  when: adrift_prs.content is defined and adrift_prs.content | length > 0
+
+- name: Check if PRs were found
+  ansible.builtin.set_fact:
+    has_prs: "{{ pr_list is defined and pr_list.get('items', []) | length > 0 }}"
+
+- name: Display PRs adrift
+  ansible.builtin.debug:
+    msg: "🦈 {{ pr_list.get('items', []) | length }} PR(s) adrift (no updates in {{ days_adrift_threshold }} days)"
