@@ -13,7 +13,9 @@
     - name: Verify mcp_manage is available
       ansible.builtin.assert:
         that: mcp_manage_check.rc == 0
-        fail_msg: "✗ mcp_manage utility not found. MCP servers may not be installed correctly."
+        fail_msg: >-
+          ✗ mcp_manage utility not found.
+          MCP servers may not be installed correctly.
         success_msg: "✓ mcp_manage utility is available"
 
     - name: Display installed MCP servers
