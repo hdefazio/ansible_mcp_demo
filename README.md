@@ -19,14 +19,16 @@ This demo includes two MCP servers:
 
 ### 1. Obtain the Fetch MCP Collection
 
-The `hdefazio.mcp_fetch` collection provides the Fetch MCP server integration. Build the collection tarball from source:
+The `hdefazio.mcp_fetch` collection provides the Fetch MCP server integration. See the [collection README](https://github.com/hdefazio/hdefazio.mcp_fetch/blob/main/README.md) for more details.
+
+Build the collection tarball from source:
 
 ```bash
 git clone https://github.com/hdefazio/hdefazio.mcp_fetch
 cd hdefazio.mcp_fetch
-ansible-galaxy collection build
-cp hdefazio-mcp_fetch-*.tar.gz /path/to/ansible_mcp_demo/ee_build/
+ansible-galaxy collection build --output-path /path/to/ansible_mcp_demo/ee_build/
 ```
+
 
 ### 2. Build the Execution Environment
 
