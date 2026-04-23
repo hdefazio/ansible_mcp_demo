@@ -126,12 +126,14 @@ ansible-navigator run playbooks/whale-shark-pr-migration.yml -i inventory.yml
 ```
 🦈 Whale Shark PR Migration Status 🦈
 
+Your PR is migrating through the review ocean!
+
 Ocean Conditions: 🌊 Calm seas - All GitHub systems operational
 Current Location: 🦑 tangled in kelp (blocked)
-📅 Days adrift: 21 days
+Days adrift: 📅 21 days
 
 🦈 Whale Shark Wisdom:
-  > "Anything added dilutes everything else."
+  > "Half measures are as bad as nothing at all."
 
 🧭 Navigation Tips:
 1. Check your compass - Read the CI failure logs
