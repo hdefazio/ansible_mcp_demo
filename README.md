@@ -94,7 +94,7 @@ ansible-navigator run playbooks/test-fetch-mcp.yml
 
 ## Demo: Whale Shark PR Migration Tracker
 
-The `whale_shark_demo/whale-shark-pr-migration.yml` playbook showcases both MCP servers working together in a practical workflow. It tracks stale pull requests, monitors their health, and provides ocean-themed status reports.
+The `whale_shark_demo/whale-shark-pr-migration.yml` playbook showcases both MCP servers working together in a practical workflow. It tracks stale pull requests, monitors their health, and posts ocean-themed status comments directly on PRs.
 
 ### What It Does
 
@@ -125,7 +125,7 @@ comment_freshness_days: 7        # Only post if we haven't commented in this man
 ansible-navigator run playbooks/whale_shark_demo/whale-shark-pr-migration.yml -i inventory.yml
 ```
 
-### Output Example
+### Output: Example PR Comment
 
 ```
 🦈 Whale Shark PR Migration Status 🦈
@@ -140,7 +140,7 @@ Days adrift: 📅 21 days
   > "Half measures are as bad as nothing at all."
 
 🧭 Navigation Tips:
-1. Check your compass - Read the CI failure logs
+1. Check your compass - Review the CI status and any feedback
 2. Test the waters - Run tests locally before pushing
 3. Ask the school - Request review from your team
 
