@@ -1,0 +1,133 @@
+---
+- name: Whale Shark PR Migration Tracker
+  hosts: localhost
+  gather_facts: false
+  vars:
+    repo_owner: "ansible-collections"
+    repo_name: "amazon.ai"
+    days_adrift_threshold: 3
+    threshold_date: "{{ lookup('pipe', 'date -d \"' + days_adrift_threshold|string + ' days ago\" +%Y-%m-%d') }}"
+    current_epoch: "{{ lookup('pipe', 'date +%s') }}"
+    # Ocean-themed status mapping
+    ocean_conditions:
+      none: "🌊 Calm seas - All GitHub systems operational"
+      minor: "🌀 Choppy waters - Minor GitHub issues detected"
+      major: "⛈️ Storm warning - Major GitHub outages"
+      critical: "🌪️ Hurricane conditions - Critical GitHub outages"
+    status_locations:
+      draft: "🥚 spawning grounds (draft mode)"
+      open: "🌊 open waters"
+      unstable: "🪸 coral reef (failing CI)"
+      dirty: "🪨 rocky shoals (merge conflicts)"
+      behind: "🌀 caught in currents (behind main)"
+      blocked: "🦑 tangled in kelp (blocked)"
+      clean: "🐠 clear waters (ready to merge)"
+
+  tasks:
+    # ============================================================================
+    # Check Ocean Conditions (GitHub Platform Status)
+    # ============================================================================
+    - name: Check GitHub platform status using Fetch MCP
+      ansible.mcp.run_tool:
+        name: fetch
+        args:
+          url: https://www.githubstatus.com/api/v2/status.json
+      delegate_to: mcp-server-fetch
+      register: github_status
+      failed_when: false
+
+    - name: Extract and parse JSON from fetch response
+      ansible.builtin.set_fact:
+        platform_status: "{{ github_status.content | parse_mcp_json }}"
+      when: github_status is defined and github_status.content is defined
+
+    # ============================================================================
+    # Find PRs Adrift (Search for stale pull requests)
+    # ============================================================================
+    - name: Find PRs adrift using GitHub MCP
+      ansible.mcp.run_tool:
+        name: search_pull_requests
+        args:
+          query: "repo:{{ repo_owner }}/{{ repo_name }} is:pr is:open updated:<{{ threshold_date }}"
+      delegate_to: github-mcp-server
+      register: adrift_prs
+
+    - name: Parse PR results
+      ansible.builtin.set_fact:
+        pr_list: "{{ adrift_prs.content | parse_mcp_json }}"
+      when: adrift_prs.content is defined and adrift_prs.content | length > 0
+
+    - name: Display PRs adrift
+      ansible.builtin.debug:
+        msg: "🦈 {{ pr_list['items'] | default([]) | length }} PRs adrift (no updates in {{ days_adrift_threshold }} days)"
+      when: pr_list is defined
+
+    # ============================================================================
+    # Get Detailed PR Information (including CI status)
+    # ============================================================================
+    - name: Get detailed PR information using GitHub MCP
+      ansible.mcp.run_tool:
+        name: pull_request_read
+        args: "{{ {'method': 'get', 'owner': repo_owner, 'repo': repo_name, 'pullNumber': item.number} }}"
+      delegate_to: github-mcp-server
+      loop: "{{ pr_list['items'] | default([]) }}"
+      loop_control:
+        label: "PR #{{ item.number }}"
+      register: pr_details
+      when: pr_list is defined
+
+    - name: Parse detailed PR results
+      ansible.builtin.set_fact:
+        pr_details_map: "{{ pr_details_map | default({}) | combine({item.item.number: item.content | parse_mcp_json}) }}"
+      loop: "{{ pr_details.results | default([]) }}"
+      loop_control:
+        label: "PR #{{ item.item.number }}"
+      when: pr_details is defined and not item.failed | default(false)
+
+    # ============================================================================
+    # Get GitHub Zen Wisdom
+    # ============================================================================
+    - name: Get GitHub zen wisdom using Fetch MCP
+      ansible.mcp.run_tool:
+        name: fetch
+        args:
+          url: "https://api.github.com/zen"
+      delegate_to: mcp-server-fetch
+      register: zen_wisdom
+      failed_when: false
+
+    - name: Extract zen quote from response
+      ansible.builtin.set_fact:
+        zen_quote: "{{ zen_wisdom.content[0].text | regex_search('Contents of https://api.github.com/zen:\\n(.+)$', '\\1') | first | default('Keep swimming!') }}"
+      when: zen_wisdom.content is defined
+
+    # ============================================================================
+    # Display Migration Report for Each PR
+    # ============================================================================
+    - name: Display migration status for each PR
+      ansible.builtin.debug:
+        msg: |
+          🦈 **Whale Shark PR Migration Status** 🦈
+
+          Ocean Conditions: {{ ocean_conditions[platform_status.status.indicator] | default('Unknown ocean conditions') }}
+          Current Location: {{ status_locations[pr_details_map[item.number].mergeable_state] | default('🌊 unknown waters') }}
+          📅 Days adrift: {{ days_adrift }} days
+
+          🦈 Whale Shark Wisdom:
+            > _"{{ zen_quote | default('Keep swimming!') }}"_
+
+          🧭 **Navigation Tips:**
+          1. **Check your compass** - Read the CI failure logs
+          2. **Test the waters** - Run tests locally before pushing
+          3. **Ask the school** - Request review from your team
+
+          ---
+          _Whale sharks are the largest fish in the ocean and can migrate over 7,000 miles._
+          _Your PR can make it through code review! Keep swimming! 🦈🌊_
+      loop: "{{ pr_list['items'] | default([]) }}"
+      loop_control:
+        label: "PR #{{ item.number }}"
+      when: pr_list is defined and pr_details_map is defined
+      vars:
+        updated_date: "{{ pr_details_map[item.number].updated_at[:10] }}"
+        days_adrift: "{{ lookup('pipe', 'echo $(( ( $(date +%s) - $(date -d ' + updated_date + ' +%s) ) / 86400 ))') }}"
