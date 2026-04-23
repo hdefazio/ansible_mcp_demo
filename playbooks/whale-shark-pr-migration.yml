@@ -131,3 +131,20 @@
       vars:
         updated_date: "{{ pr_details_map[item.number].updated_at[:10] }}"
         days_adrift: "{{ lookup('pipe', 'echo $(( ( $(date +%s) - $(date -d ' + updated_date + ' +%s) ) / 86400 ))') }}"
+
+    # ============================================================================
+    # Summary of All PRs
+    # ============================================================================
+    - name: Display summary of all examined PRs
+      ansible.builtin.debug:
+        msg: |
+
+          🦈 **Migration Summary** 🦈
+          {{ pr_list['items'] | default([]) | length }} PRs examined
+
+          {% for pr in pr_list['items'] | default([]) %}
+          • PR {{ pr.number }}: {{ pr_details_map[pr.number].title }}
+          Status: {{ status_locations[pr_details_map[pr.number].mergeable_state] | default('🌊 unknown') }}
+          {{ pr_details_map[pr.number].html_url }}
+          {% endfor %}
+      when: pr_list is defined and pr_details_map is defined
