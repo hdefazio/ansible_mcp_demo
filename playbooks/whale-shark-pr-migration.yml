@@ -6,8 +6,10 @@
     repo_owner: "hdefazio"
     repo_name: "ansible_mcp_demo"
     days_adrift_threshold: -1
+    comment_freshness_days: 7  # Only post if we haven't commented in this many days
     threshold_date: "{{ lookup('pipe', 'date -d \"' + days_adrift_threshold|string + ' days ago\" +%Y-%m-%d') }}"
     current_epoch: "{{ lookup('pipe', 'date +%s') }}"
+    comment_age_threshold_date: "{{ lookup('pipe', 'date -d \"' + comment_freshness_days|string + ' days ago\" +%Y-%m-%dT%H:%M:%SZ') }}"
     # Ocean-themed status mapping
     ocean_conditions:
       none: "🌊 Calm seas - All GitHub systems operational"
@@ -45,7 +47,59 @@
 
     - name: Display PRs adrift
       ansible.builtin.debug:
-        msg: "🦈 {{ pr_list.get('items', []) | length }} PRs adrift (no updates in {{ days_adrift_threshold }} days)"
+        msg: "🦈 {{ pr_list.get('items', []) | length }} PR(s) adrift (no updates in {{ days_adrift_threshold }} days)"
+
+    # ============================================================================
+    # Check for Existing Whale Shark Comments (Idempotency)
+    # ============================================================================
+    - name: Get existing comments on each PR using GitHub MCP
+      ansible.mcp.run_tool:
+        name: pull_request_read
+        args: "{{ {'method': 'get_comments', 'owner': repo_owner, 'repo': repo_name, 'pullNumber': item.number} }}"
+      delegate_to: github-mcp-server
+      loop: "{{ pr_list.get('items', []) }}"
+      loop_control:
+        label: "PR #{{ item.number }}"
+      register: pr_comments
+      when: has_prs
+
+    - name: Check if we've commented recently
+      ansible.builtin.set_fact:
+        prs_needing_comments: >-
+          {{ prs_needing_comments | default([]) + [item.item.number] }}
+      loop: "{{ pr_comments.results | default([]) }}"
+      loop_control:
+        label: "PR #{{ item.item.number }}"
+      when:
+        - pr_comments is defined
+        - not item.failed | default(false)
+        - needs_comment
+      vars:
+        comments_data: "{{ item.content | parse_mcp_json }}"
+        whale_shark_comments: >-
+          {{ comments_data |
+             selectattr('body', 'search', '🦈.*Whale Shark PR Migration Status') |
+             list }}
+        recent_whale_shark_comments: >-
+          {{ whale_shark_comments |
+             selectattr('created_at', 'defined') |
+             map(attribute='created_at') |
+             select('>', comment_age_threshold_date) |
+             list }}
+        needs_comment: "{{ whale_shark_comments | length == 0 or recent_whale_shark_comments | length == 0 }}"
+
+    - name: Check if any PRs need comments
+      ansible.builtin.set_fact:
+        has_prs_needing_comments: "{{ prs_needing_comments is defined and prs_needing_comments | length > 0 }}"
+
+    - name: Display skipped PRs (already commented recently)
+      ansible.builtin.debug:
+        msg: "⏭️  Skipping {{ skipped_count }} PR(s) - already commented within the last {{ comment_freshness_days | abs }} day(s)"
+      vars:
+        total_prs: "{{ pr_list.get('items', []) | length }}"
+        prs_needing: "{{ prs_needing_comments | default([]) | length }}"
+        skipped_count: "{{ (total_prs | int) - (prs_needing | int) }}"
+      when: has_prs and (skipped_count | int) > 0
 
     # ============================================================================
     # Get Detailed PR Information (including CI status)
@@ -53,20 +107,21 @@
     - name: Get detailed PR information using GitHub MCP
       ansible.mcp.run_tool:
         name: pull_request_read
-        args: "{{ {'method': 'get', 'owner': repo_owner, 'repo': repo_name, 'pullNumber': item.number} }}"
+        args: "{{ {'method': 'get', 'owner': repo_owner, 'repo': repo_name, 'pullNumber': pr_number} }}"
       delegate_to: github-mcp-server
-      loop: "{{ pr_list.get('items', []) }}"
+      loop: "{{ prs_needing_comments | default([]) }}"
       loop_control:
-        label: "PR #{{ item.number }}"
+        loop_var: pr_number
+        label: "PR #{{ pr_number }}"
       register: pr_details
-      when: has_prs
+      when: has_prs_needing_comments
 
     - name: Parse detailed PR results
       ansible.builtin.set_fact:
-        pr_details_map: "{{ pr_details_map | default({}) | combine({item.item.number: item.content | parse_mcp_json}) }}"
+        pr_details_map: "{{ pr_details_map | default({}) | combine({item.pr_number: item.content | parse_mcp_json}) }}"
       loop: "{{ pr_details.results | default([]) }}"
       loop_control:
-        label: "PR #{{ item.item.number }}"
+        label: "PR #{{ item.pr_number }}"
       when: pr_details is defined and not item.failed | default(false)
 
     # ============================================================================
@@ -80,12 +135,12 @@
       delegate_to: mcp-server-fetch
       register: github_status
       failed_when: false
-      when: has_prs
+      when: has_prs_needing_comments
 
     - name: Extract and parse JSON from fetch response
       ansible.builtin.set_fact:
         platform_status: "{{ github_status.content | parse_mcp_json }}"
-      when: has_prs and github_status is defined and github_status.content is defined
+      when: has_prs_needing_comments and github_status is defined and github_status.content is defined
 
     # ============================================================================
     # Get GitHub Zen Wisdom
@@ -98,12 +153,12 @@
       delegate_to: mcp-server-fetch
       register: zen_wisdom
       failed_when: false
-      when: has_prs
+      when: has_prs_needing_comments
 
     - name: Extract zen quote from response
       ansible.builtin.set_fact:
         zen_quote: "{{ zen_wisdom.content[0].text | regex_search('Contents of https://api.github.com/zen:\\n(.+)$', '\\1') | first | default('Keep swimming!') }}"
-      when: has_prs and zen_wisdom.content is defined
+      when: has_prs_needing_comments and zen_wisdom.content is defined
 
     # ============================================================================
     # Post Migration Report Comment on Each PR
@@ -111,14 +166,15 @@
     - name: Post migration status comment on PR
       ansible.mcp.run_tool:
         name: add_issue_comment
-        args: "{{ {'owner': repo_owner, 'repo': repo_name, 'issue_number': item.number, 'body': comment_body} }}"
+        args: "{{ {'owner': repo_owner, 'repo': repo_name, 'issue_number': pr_number, 'body': comment_body} }}"
       delegate_to: github-mcp-server
-      loop: "{{ pr_list.get('items', []) }}"
+      loop: "{{ prs_needing_comments | default([]) }}"
       loop_control:
-        label: "PR #{{ item.number }}"
-      when: has_prs and pr_details_map is defined
+        loop_var: pr_number
+        label: "PR #{{ pr_number }}"
+      when: has_prs_needing_comments and pr_details_map is defined
       vars:
-        updated_date: "{{ pr_details_map[item.number].updated_at[:10] }}"
+        updated_date: "{{ pr_details_map[pr_number].updated_at[:10] }}"
         days_adrift: "{{ lookup('pipe', 'echo $(( ( $(date +%s) - $(date -d ' + updated_date + ' +%s) ) / 86400 ))') }}"
         comment_body: |
           🦈 **Whale Shark PR Migration Status** 🦈
@@ -126,7 +182,7 @@
           Your PR is migrating through the review ocean!
 
           Ocean Conditions: {{ ocean_conditions[platform_status.status.indicator] | default('Unknown ocean conditions') }}
-          Current Location: {{ status_locations[pr_details_map[item.number].mergeable_state] | default('🌊 unknown waters') }}
+          Current Location: {{ status_locations[pr_details_map[pr_number].mergeable_state] | default('🌊 unknown waters') }}
           Days adrift: 📅 {{ days_adrift }} days
 
           🦈 Whale Shark Wisdom:
@@ -144,16 +200,16 @@
     # ============================================================================
     # Summary of All PRs
     # ============================================================================
-    - name: Display summary of all examined PRs
+    - name: Display summary of commented PRs
       ansible.builtin.debug:
         msg: |
 
           🦈 **Migration Summary** 🦈
-          {{ pr_list.get('items', []) | length }} PRs examined
+          {{ prs_needing_comments | default([]) | length }} PRs commented on
 
-          {% for pr in pr_list.get('items', []) %}
-          • PR {{ pr.number }}: {{ pr_details_map[pr.number].title }}
-          Status: {{ status_locations[pr_details_map[pr.number].mergeable_state] | default('🌊 unknown') }}
-          {{ pr_details_map[pr.number].html_url }}
+          {% for pr_num in prs_needing_comments | default([]) %}
+          • PR {{ pr_num }}: {{ pr_details_map[pr_num].title }}
+          Status: {{ status_locations[pr_details_map[pr_num].mergeable_state] | default('🌊 unknown') }}
+          {{ pr_details_map[pr_num].html_url }}
           {% endfor %}
-      when: has_prs and pr_details_map is defined
+      when: has_prs_needing_comments and pr_details_map is defined

@@ -22,8 +22,9 @@ def parse_mcp_json(content):
 
     try:
         text = content[0].get('text', '')
-        # Extract JSON object from text (handles text before/after JSON)
-        match = re.search(r'\{.*\}', text, re.MULTILINE | re.DOTALL)
+        # Extract JSON object or array from text (handles text before/after JSON)
+        # Try to match JSON object {...} or array [...]
+        match = re.search(r'[\{\[].*[\}\]]', text, re.MULTILINE | re.DOTALL)
         if match:
             return json.loads(match.group(0))
     except (AttributeError, ValueError, json.JSONDecodeError):
