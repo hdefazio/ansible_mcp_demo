@@ -1,0 +1,73 @@
+---
+- name: Verify MCP Execution Environment Setup
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Check if mcp_manage utility is available
+      ansible.builtin.command: mcp_manage list
+      register: mcp_manage_check
+      changed_when: false
+      failed_when: false
+
+    - name: Verify mcp_manage is available
+      ansible.builtin.assert:
+        that: mcp_manage_check.rc == 0
+        fail_msg: "✗ mcp_manage utility not found. MCP servers may not be installed correctly."
+        success_msg: "✓ mcp_manage utility is available"
+
+    - name: Display installed MCP servers
+      ansible.builtin.debug:
+        msg: "{{ mcp_manage_check.stdout_lines }}"
+
+    - name: Check if GitHub MCP server is registered
+      ansible.builtin.command: mcp_manage info github-mcp-server
+      register: github_mcp_info
+      changed_when: false
+      failed_when: false
+
+    - name: Verify GitHub MCP server is available
+      ansible.builtin.assert:
+        that: github_mcp_info.rc == 0
+        fail_msg: "✗ GitHub MCP server not found. Check installation."
+        success_msg: "✓ GitHub MCP server is registered and available"
+
+    - name: Check if Fetch MCP server is registered
+      ansible.builtin.command: mcp_manage info mcp-server-fetch
+      register: fetch_mcp_info
+      changed_when: false
+      failed_when: false
+
+    - name: Verify Fetch MCP server is available
+      ansible.builtin.assert:
+        that: fetch_mcp_info.rc == 0
+        fail_msg: "✗ Fetch MCP server not found. Check installation."
+        success_msg: "✓ Fetch MCP server is registered and available"
+
+    - name: Check MCP servers manifest file
+      ansible.builtin.stat:
+        path: /opt/mcp/mcpservers.json
+      register: manifest_file
+
+    - name: Verify manifest file exists
+      ansible.builtin.assert:
+        that: manifest_file.stat.exists
+        fail_msg: "✗ MCP manifest file not found at mcpservers.json"
+        success_msg: "✓ MCP manifest file exists at mcpservers.json"
+
+    - name: Verification complete
+      ansible.builtin.debug:
+        msg:
+          - "=========================================="
+          - "✓ Execution Environment Verification Complete"
+          - "=========================================="
+          - "All checks passed! Your EE is ready for the demo."
+          - ""
+          - "Verified MCP servers:"
+          - "  • GitHub MCP server (github-mcp-server)"
+          - "  • Fetch MCP server (mcp-server-fetch)"
+          - ""
+          - "Next steps:"
+          - "  1. Set GITHUB_PERSONAL_ACCESS_TOKEN environment variable"
+          - "  2. Run your demo playbook"
+          - "=========================================="

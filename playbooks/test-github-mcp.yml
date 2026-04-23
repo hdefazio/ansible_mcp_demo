@@ -1,0 +1,34 @@
+---
+- name: Test GitHub MCP Server
+  hosts: localhost
+  gather_facts: false
+  vars:
+    ansible_connection: ansible.mcp.mcp
+    ansible_mcp_server_name: github-mcp-server
+
+  tasks:
+    - name: Get GitHub MCP server information
+      ansible.mcp.server_info:
+      register: github_server_info
+
+    - name: Display GitHub MCP server information
+      ansible.builtin.debug:
+        var: github_server_info
+
+    - name: Get available tools from GitHub MCP server
+      ansible.mcp.tools_info:
+      register: github_tools
+
+    - name: Display available GitHub MCP tools
+      ansible.builtin.debug:
+        var: github_tools
+
+    - name: Summary
+      ansible.builtin.debug:
+        msg:
+          - "=========================================="
+          - "GitHub MCP Server: {{ github_server_info.server_info.serverInfo.name }}"
+          - "Version: {{ github_server_info.server_info.serverInfo.version }}"
+          - "Protocol: {{ github_server_info.server_info.protocolVersion }}"
+          - "Available Tools: {{ github_tools.tools | length }}"
+          - "=========================================="

@@ -1,0 +1,15 @@
+---
+ansible-navigator:
+  execution-environment:
+    image: localhost/my-mcp-ee:latest
+    pull:
+      policy: never
+    container-engine: podman
+    environment-variables:
+      pass:
+        - GITHUB_PERSONAL_ACCESS_TOKEN
+      set:
+        ANSIBLE_COLLECTIONS_PATH: /usr/share/ansible/collections
+  mode: stdout
+  playbook-artifact:
+    enable: false

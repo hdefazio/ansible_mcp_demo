@@ -1,0 +1,34 @@
+---
+- name: Test Fetch MCP Server
+  hosts: localhost
+  gather_facts: false
+  vars:
+    ansible_connection: ansible.mcp.mcp
+    ansible_mcp_server_name: mcp-server-fetch
+
+  tasks:
+    - name: Get Fetch MCP server information
+      ansible.mcp.server_info:
+      register: fetch_server_info
+
+    - name: Display Fetch MCP server information
+      ansible.builtin.debug:
+        var: fetch_server_info
+
+    - name: Get available tools from Fetch MCP server
+      ansible.mcp.tools_info:
+      register: fetch_tools
+
+    - name: Display available Fetch MCP tools
+      ansible.builtin.debug:
+        var: fetch_tools
+
+    - name: Summary
+      ansible.builtin.debug:
+        msg:
+          - "=========================================="
+          - "Fetch MCP Server: {{ fetch_server_info.server_info.serverInfo.name }}"
+          - "Version: {{ fetch_server_info.server_info.serverInfo.version }}"
+          - "Protocol: {{ fetch_server_info.server_info.protocolVersion }}"
+          - "Available Tools: {{ fetch_tools.tools | length }}"
+          - "=========================================="
