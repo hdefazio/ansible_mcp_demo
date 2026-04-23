@@ -17,7 +17,18 @@ This demo includes two MCP servers:
 
 ## Setup
 
-### 1. Build the Execution Environment
+### 1. Obtain the Fetch MCP Collection
+
+The `hdefazio.mcp_fetch` collection provides the Fetch MCP server integration. Build the collection tarball from source:
+
+```bash
+git clone https://github.com/hdefazio/hdefazio.mcp_fetch
+cd hdefazio.mcp_fetch
+ansible-galaxy collection build
+cp hdefazio-mcp_fetch-*.tar.gz /path/to/ansible_mcp_demo/ee_build/
+```
+
+### 2. Build the Execution Environment
 
 The execution environment includes both MCP servers and required Ansible collections.
 
@@ -26,9 +37,7 @@ cd ee_build
 ansible-builder build -t my-mcp-ee:latest -f execution-environment.yml -v 3
 ```
 
-**Note:** The `hdefazio-mcp_fetch-1.0.0.tar.gz` collection tarball must be present in `ee_build/` before building.
-
-### 2. Configure Environment
+### 3. Configure Environment
 
 Set your GitHub Personal Access Token:
 
