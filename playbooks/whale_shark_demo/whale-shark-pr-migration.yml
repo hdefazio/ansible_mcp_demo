@@ -157,26 +157,7 @@
       vars:
         updated_date: "{{ pr_details_map[pr_number].updated_at[:10] }}"
         days_adrift: "{{ lookup('pipe', 'echo $(( ( $(date +%s) - $(date -d ' + updated_date + ' +%s) ) / 86400 ))') }}"
-        comment_body: |
-          🦈 **Whale Shark PR Migration Status** 🦈
-
-          Your PR is migrating through the review ocean!
-
-          Ocean Conditions: {{ ocean_conditions[platform_status.status.indicator] | default('Unknown ocean conditions') }}
-          Current Location: {{ status_locations[pr_details_map[pr_number].mergeable_state] | default('🌊 unknown waters') }}
-          Days adrift: 📅 {{ days_adrift }} days
-
-          🦈 Whale Shark Wisdom:
-            > _"{{ zen_quote | default('Keep swimming!') }}"_
-
-          🧭 **Navigation Tips:**
-          1. **Check your compass** - Read the CI failure logs
-          2. **Test the waters** - Run tests locally before pushing
-          3. **Ask the school** - Request review from your team
-
-          ---
-          _Whale sharks are the largest fish in the ocean and can migrate over 7,000 miles._
-          _Your PR can make it through code review! Keep swimming! 🦈🌊_
+        comment_body: "{{ lookup('template', 'templates/pr_comment.j2') }}"
 
     # ============================================================================
     # Summary of All PRs
