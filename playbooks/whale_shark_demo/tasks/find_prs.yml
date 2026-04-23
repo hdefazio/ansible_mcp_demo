@@ -6,7 +6,9 @@
   ansible.mcp.run_tool:
     name: search_pull_requests
     args:
-      query: "repo:{{ repo_owner }}/{{ repo_name }} is:pr is:open -is:draft updated:<{{ threshold_date }}"
+      query: >-
+        repo:{{ repo_owner }}/{{ repo_name }}
+        is:pr is:open -is:draft updated:<{{ threshold_date }}
   delegate_to: github-mcp-server
   register: adrift_prs
 
@@ -17,8 +19,12 @@
 
 - name: Check if PRs were found
   ansible.builtin.set_fact:
-    has_prs: "{{ pr_list is defined and pr_list.get('items', []) | length > 0 }}"
+    has_prs: >-
+      {{ pr_list is defined and
+      pr_list.get('items', []) | length > 0 }}
 
 - name: Display PRs adrift
   ansible.builtin.debug:
-    msg: "🦈 {{ pr_list.get('items', []) | length }} PR(s) adrift (no updates in {{ days_adrift_threshold }} days)"
+    msg: >-
+      🦈 {{ pr_list.get('items', []) | length }} PR(s) adrift
+      (no updates in {{ days_adrift_threshold }} days)

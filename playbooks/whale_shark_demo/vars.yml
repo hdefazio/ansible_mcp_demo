@@ -4,13 +4,17 @@ repo_owner: "hdefazio"
 repo_name: "ansible_mcp_demo"
 
 # Threshold settings
-days_adrift_threshold: -1
+days_adrift_threshold: 3
 comment_freshness_days: 7  # Only post if we haven't commented in this many days
 
 # Calculated dates (these use the thresholds above)
-threshold_date: "{{ lookup('pipe', 'date -d \"' + days_adrift_threshold|string + ' days ago\" +%Y-%m-%d') }}"
+threshold_date: >-
+  {{ lookup('pipe', 'date -d "' + days_adrift_threshold|string +
+  ' days ago" +%Y-%m-%d') }}
 current_epoch: "{{ lookup('pipe', 'date +%s') }}"
-comment_age_threshold_date: "{{ lookup('pipe', 'date -d \"' + comment_freshness_days|string + ' days ago\" +%Y-%m-%dT%H:%M:%SZ') }}"
+comment_age_threshold_date: >-
+  {{ lookup('pipe', 'date -d "' + comment_freshness_days|string +
+  ' days ago" +%Y-%m-%dT%H:%M:%SZ') }}
 
 # Ocean-themed status mapping
 ocean_conditions:

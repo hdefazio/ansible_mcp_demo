@@ -18,7 +18,9 @@
     - name: Get detailed PR information using GitHub MCP
       ansible.mcp.run_tool:
         name: pull_request_read
-        args: "{{ {'method': 'get', 'owner': repo_owner, 'repo': repo_name, 'pullNumber': pr_number} }}"
+        args: >-
+          {{ {'method': 'get', 'owner': repo_owner,
+          'repo': repo_name, 'pullNumber': pr_number} }}
       delegate_to: github-mcp-server
       loop: "{{ prs_needing_comments | default([]) }}"
       loop_control:
@@ -29,7 +31,9 @@
 
     - name: Parse detailed PR results
       ansible.builtin.set_fact:
-        pr_details_map: "{{ pr_details_map | default({}) | combine({item.pr_number: item.content | parse_mcp_json}) }}"
+        pr_details_map: >-
+          {{ pr_details_map | default({}) |
+          combine({item.pr_number: item.content | parse_mcp_json}) }}
       loop: "{{ pr_details.results | default([]) }}"
       loop_control:
         label: "PR #{{ item.pr_number }}"
@@ -51,7 +55,10 @@
     - name: Extract and parse JSON from fetch response
       ansible.builtin.set_fact:
         platform_status: "{{ github_status.content | parse_mcp_json }}"
-      when: has_prs_needing_comments and github_status is defined and github_status.content is defined
+      when:
+        - has_prs_needing_comments
+        - github_status is defined
+        - github_status.content is defined
 
     # ============================================================================
     # Get GitHub Zen Wisdom
@@ -68,7 +75,8 @@
 
     - name: Extract zen quote from response
       ansible.builtin.set_fact:
-        zen_quote: "{{ zen_wisdom.content[0].text | regex_search('Contents of https://api.github.com/zen:\\n(.+)$', '\\1') | first | default('Keep swimming!') }}"
+        # yamllint disable-line rule:line-length
+        zen_quote: "{{ zen_wisdom.content[0].text.split('\n')[-1] if 'zen' in zen_wisdom.content[0].text else 'Keep swimming!' }}"
       when: has_prs_needing_comments and zen_wisdom.content is defined
 
     # ============================================================================
@@ -77,7 +85,9 @@
     - name: Post migration status comment on PR
       ansible.mcp.run_tool:
         name: add_issue_comment
-        args: "{{ {'owner': repo_owner, 'repo': repo_name, 'issue_number': pr_number, 'body': comment_body} }}"
+        args: >-
+          {{ {'owner': repo_owner, 'repo': repo_name,
+          'issue_number': pr_number, 'body': comment_body} }}
       delegate_to: github-mcp-server
       loop: "{{ prs_needing_comments | default([]) }}"
       loop_control:
@@ -86,7 +96,9 @@
       when: has_prs_needing_comments and pr_details_map is defined
       vars:
         updated_date: "{{ pr_details_map[pr_number].updated_at[:10] }}"
-        days_adrift: "{{ lookup('pipe', 'echo $(( ( $(date +%s) - $(date -d ' + updated_date + ' +%s) ) / 86400 ))') }}"
+        days_adrift: >-
+          {{ lookup('pipe', 'echo $(( ( $(date +%s) - $(date -d ' +
+          updated_date + ' +%s) ) / 86400 ))') }}
         comment_body: "{{ lookup('template', 'templates/pr_comment.j2') }}"
 
     # ============================================================================
@@ -101,7 +113,9 @@
 
           {% for pr_num in prs_needing_comments | default([]) %}
           • PR {{ pr_num }}: {{ pr_details_map[pr_num].title }}
-          Status: {{ status_locations[pr_details_map[pr_num].mergeable_state] | default('🌊 unknown') }}
+          Status: {{ status_locations[
+            pr_details_map[pr_num].mergeable_state
+          ] | default('🌊 unknown') }}
           {{ pr_details_map[pr_num].html_url }}
           {% endfor %}
       when: has_prs_needing_comments and pr_details_map is defined
