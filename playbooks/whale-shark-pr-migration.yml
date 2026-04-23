@@ -5,7 +5,7 @@
   vars:
     repo_owner: "hdefazio"
     repo_name: "ansible_mcp_demo"
-    days_adrift_threshold: 3
+    days_adrift_threshold: -1
     threshold_date: "{{ lookup('pipe', 'date -d \"' + days_adrift_threshold|string + ' days ago\" +%Y-%m-%d') }}"
     current_epoch: "{{ lookup('pipe', 'date +%s') }}"
     # Ocean-themed status mapping
@@ -15,7 +15,6 @@
       major: "⛈️ Storm warning - Major GitHub outages"
       critical: "🌪️ Hurricane conditions - Critical GitHub outages"
     status_locations:
-      draft: "🥚 spawning grounds (draft mode)"
       open: "🌊 open waters"
       unstable: "🪸 coral reef (failing CI)"
       dirty: "🪨 rocky shoals (merge conflicts)"
@@ -31,7 +30,7 @@
       ansible.mcp.run_tool:
         name: search_pull_requests
         args:
-          query: "repo:{{ repo_owner }}/{{ repo_name }} is:pr is:open updated:<{{ threshold_date }}"
+          query: "repo:{{ repo_owner }}/{{ repo_name }} is:pr is:open -is:draft updated:<{{ threshold_date }}"
       delegate_to: github-mcp-server
       register: adrift_prs
 
@@ -107,11 +106,21 @@
       when: has_prs and zen_wisdom.content is defined
 
     # ============================================================================
-    # Display Migration Report for Each PR
+    # Post Migration Report Comment on Each PR
     # ============================================================================
-    - name: Display migration status for each PR
-      ansible.builtin.debug:
-        msg: |
+    - name: Post migration status comment on PR
+      ansible.mcp.run_tool:
+        name: add_issue_comment
+        args: "{{ {'owner': repo_owner, 'repo': repo_name, 'issue_number': item.number, 'body': comment_body} }}"
+      delegate_to: github-mcp-server
+      loop: "{{ pr_list.get('items', []) }}"
+      loop_control:
+        label: "PR #{{ item.number }}"
+      when: has_prs and pr_details_map is defined
+      vars:
+        updated_date: "{{ pr_details_map[item.number].updated_at[:10] }}"
+        days_adrift: "{{ lookup('pipe', 'echo $(( ( $(date +%s) - $(date -d ' + updated_date + ' +%s) ) / 86400 ))') }}"
+        comment_body: |
           🦈 **Whale Shark PR Migration Status** 🦈
 
           Your PR is migrating through the review ocean!
@@ -131,13 +140,6 @@
           ---
           _Whale sharks are the largest fish in the ocean and can migrate over 7,000 miles._
           _Your PR can make it through code review! Keep swimming! 🦈🌊_
-      loop: "{{ pr_list.get('items', []) }}"
-      loop_control:
-        label: "PR #{{ item.number }}"
-      when: has_prs and pr_details_map is defined
-      vars:
-        updated_date: "{{ pr_details_map[item.number].updated_at[:10] }}"
-        days_adrift: "{{ lookup('pipe', 'echo $(( ( $(date +%s) - $(date -d ' + updated_date + ' +%s) ) / 86400 ))') }}"
 
     # ============================================================================
     # Summary of All PRs
