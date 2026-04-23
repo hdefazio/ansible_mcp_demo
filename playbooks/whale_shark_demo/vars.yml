@@ -1,0 +1,28 @@
+---
+# Repository configuration
+repo_owner: "hdefazio"
+repo_name: "ansible_mcp_demo"
+
+# Threshold settings
+days_adrift_threshold: -1
+comment_freshness_days: 7  # Only post if we haven't commented in this many days
+
+# Calculated dates (these use the thresholds above)
+threshold_date: "{{ lookup('pipe', 'date -d \"' + days_adrift_threshold|string + ' days ago\" +%Y-%m-%d') }}"
+current_epoch: "{{ lookup('pipe', 'date +%s') }}"
+comment_age_threshold_date: "{{ lookup('pipe', 'date -d \"' + comment_freshness_days|string + ' days ago\" +%Y-%m-%dT%H:%M:%SZ') }}"
+
+# Ocean-themed status mapping
+ocean_conditions:
+  none: "🌊 Calm seas - All GitHub systems operational"
+  minor: "🌀 Choppy waters - Minor GitHub issues detected"
+  major: "⛈️ Storm warning - Major GitHub outages"
+  critical: "🌪️ Hurricane conditions - Critical GitHub outages"
+
+status_locations:
+  open: "🌊 open waters"
+  unstable: "🪸 coral reef (failing CI)"
+  dirty: "🪨 rocky shoals (merge conflicts)"
+  behind: "🌀 caught in currents (behind main)"
+  blocked: "🦑 tangled in kelp (blocked)"
+  clean: "🐠 clear waters (ready to merge)"

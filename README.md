@@ -94,7 +94,7 @@ ansible-navigator run playbooks/test-fetch-mcp.yml
 
 ## Demo: Whale Shark PR Migration Tracker
 
-The `whale-shark-pr-migration.yml` playbook showcases both MCP servers working together in a practical workflow. It tracks stale pull requests, monitors their health, and provides ocean-themed status reports.
+The `whale_shark_demo/whale-shark-pr-migration.yml` playbook showcases both MCP servers working together in a practical workflow. It tracks stale pull requests, monitors their health, and provides ocean-themed status reports.
 
 ### What It Does
 
@@ -102,23 +102,27 @@ Like a whale shark filtering through the ocean, this playbook:
 - **Checks Ocean Conditions**: Monitors GitHub platform status using Fetch MCP
 - **Finds PRs Adrift**: Searches for pull requests that haven't been updated in N days
 - **Analyzes PR Health**: Identifies PRs with failing CI or merge conflicts
-- **Provides Wisdom**: Displays GitHub Zen wisdom and navigation tips
+- **Provides Wisdom**: Posts GitHub Zen wisdom and navigation tips as PR comments
+- **Idempotent**: Only posts comments once per week to avoid spam
 
 ### Configuration
 
-Edit the playbook variables to target your repository:
+Edit `playbooks/whale_shark_demo/vars.yml` to target your repository:
 
 ```yaml
-vars:
-  repo_owner: "your-org"               # Repository owner
-  repo_name: "your-repo"               # Repository name
-  days_adrift_threshold: 3             # Days without updates
+# Repository configuration
+repo_owner: "your-org"
+repo_name: "your-repo"
+
+# Threshold settings
+days_adrift_threshold: 3         # Days without updates
+comment_freshness_days: 7        # Only post if we haven't commented in this many days
 ```
 
 ### Usage
 
 ```bash
-ansible-navigator run playbooks/whale-shark-pr-migration.yml -i inventory.yml
+ansible-navigator run playbooks/whale_shark_demo/whale-shark-pr-migration.yml -i inventory.yml
 ```
 
 ### Output Example
