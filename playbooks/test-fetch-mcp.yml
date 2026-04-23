@@ -27,8 +27,14 @@
       ansible.builtin.debug:
         msg:
           - "=========================================="
-          - "Fetch MCP Server: {{ fetch_server_info.server_info.serverInfo.name }}"
-          - "Version: {{ fetch_server_info.server_info.serverInfo.version }}"
-          - "Protocol: {{ fetch_server_info.server_info.protocolVersion }}"
+          - >-
+            Fetch MCP Server:
+            {{ fetch_server_info.server_info.serverInfo.name }}
+          - >-
+            Version:
+            {{ fetch_server_info.server_info.serverInfo.version }}
+          - >-
+            Protocol:
+            {{ fetch_server_info.server_info.protocolVersion }}
           - "Available Tools: {{ fetch_tools.tools | length }}"
           - "=========================================="

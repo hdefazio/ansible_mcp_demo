@@ -27,8 +27,14 @@
       ansible.builtin.debug:
         msg:
           - "=========================================="
-          - "GitHub MCP Server: {{ github_server_info.server_info.serverInfo.name }}"
-          - "Version: {{ github_server_info.server_info.serverInfo.version }}"
-          - "Protocol: {{ github_server_info.server_info.protocolVersion }}"
+          - >-
+            GitHub MCP Server:
+            {{ github_server_info.server_info.serverInfo.name }}
+          - >-
+            Version:
+            {{ github_server_info.server_info.serverInfo.version }}
+          - >-
+            Protocol:
+            {{ github_server_info.server_info.protocolVersion }}
           - "Available Tools: {{ github_tools.tools | length }}"
           - "=========================================="
