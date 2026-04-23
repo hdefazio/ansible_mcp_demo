@@ -111,7 +111,7 @@
 
           Ocean Conditions: {{ ocean_conditions[platform_status.status.indicator] | default('Unknown ocean conditions') }}
           Current Location: {{ status_locations[pr_details_map[item.number].mergeable_state] | default('🌊 unknown waters') }}
-          📅 Days adrift: {{ days_adrift }} days
+          Days adrift: 📅 {{ days_adrift }} days
 
           🦈 Whale Shark Wisdom:
             > _"{{ zen_quote | default('Keep swimming!') }}"_
