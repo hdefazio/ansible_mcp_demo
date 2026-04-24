@@ -39,6 +39,12 @@
         label: "PR #{{ item.pr_number }}"
       when: pr_details is defined and not item.failed | default(false)
 
+    - name: Only comment on PRs with successfully loaded details
+      ansible.builtin.set_fact:
+        prs_to_comment: "{{ (prs_needing_comments | default([])) | select('in', pr_details_map | default({})) | list }}"
+        has_prs_to_comment: "{{ ((prs_needing_comments | default([])) | select('in', pr_details_map | default({})) | list | length) > 0 }}"
+      when: has_prs_needing_comments
+
     # ============================================================================
     # Check Ocean Conditions (GitHub Platform Status)
     # ============================================================================
@@ -50,13 +56,13 @@
       delegate_to: mcp-server-fetch
       register: github_status
       failed_when: false
-      when: has_prs_needing_comments
+      when: has_prs_to_comment | default(false)
 
     - name: Extract and parse JSON from fetch response
       ansible.builtin.set_fact:
         platform_status: "{{ github_status.content | parse_mcp_json }}"
       when:
-        - has_prs_needing_comments
+        - has_prs_to_comment | default(false)
         - github_status is defined
         - github_status.content is defined
 
@@ -71,13 +77,13 @@
       delegate_to: mcp-server-fetch
       register: zen_wisdom
       failed_when: false
-      when: has_prs_needing_comments
+      when: has_prs_to_comment | default(false)
 
     - name: Extract zen quote from response
       ansible.builtin.set_fact:
         # yamllint disable-line rule:line-length
         zen_quote: "{{ zen_wisdom.content[0].text.split('\n')[-1] if 'zen' in zen_wisdom.content[0].text else 'Keep swimming!' }}"
-      when: has_prs_needing_comments and zen_wisdom.content is defined
+      when: has_prs_to_comment | default(false) and zen_wisdom.content is defined
 
     # ============================================================================
     # Post Migration Report Comment on Each PR
@@ -89,11 +95,11 @@
           {{ {'owner': repo_owner, 'repo': repo_name,
           'issue_number': pr_number, 'body': comment_body} }}
       delegate_to: github-mcp-server
-      loop: "{{ prs_needing_comments | default([]) }}"
+      loop: "{{ prs_to_comment | default([]) }}"
       loop_control:
         loop_var: pr_number
         label: "PR #{{ pr_number }}"
-      when: has_prs_needing_comments and pr_details_map is defined
+      when: has_prs_to_comment | default(false) and pr_details_map is defined
       vars:
         updated_date: "{{ pr_details_map[pr_number].updated_at[:10] }}"
         days_adrift: >-
@@ -109,13 +115,13 @@
         msg: |
 
           🦈 **Migration Summary** 🦈
-          {{ prs_needing_comments | default([]) | length }} PRs commented on
+          {{ prs_to_comment | default([]) | length }} PRs commented on
 
-          {% for pr_num in prs_needing_comments | default([]) %}
+          {% for pr_num in prs_to_comment | default([]) %}
           • PR {{ pr_num }}: {{ pr_details_map[pr_num].title }}
           Status: {{ status_locations[
             pr_details_map[pr_num].mergeable_state
           ] | default('🌊 unknown') }}
           {{ pr_details_map[pr_num].html_url }}
           {% endfor %}
-      when: has_prs_needing_comments and pr_details_map is defined
+      when: has_prs_to_comment | default(false) and pr_details_map is defined

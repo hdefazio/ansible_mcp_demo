@@ -14,14 +14,11 @@
 
 - name: Parse PR results
   ansible.builtin.set_fact:
-    pr_list: "{{ adrift_prs.content | parse_mcp_json }}"
-  when: adrift_prs.content is defined and adrift_prs.content | length > 0
+    pr_list: "{{ adrift_prs.content | default([]) | parse_mcp_json }}"
 
 - name: Check if PRs were found
   ansible.builtin.set_fact:
-    has_prs: >-
-      {{ pr_list is defined and
-      pr_list.get('items', []) | length > 0 }}
+    has_prs: "{{ pr_list.get('items', []) | length > 0 }}"
 
 - name: Display PRs adrift
   ansible.builtin.debug:
