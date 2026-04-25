@@ -6,49 +6,20 @@
     - vars.yml
 
   tasks:
+    # ============================================================================
+    # Find and Filter PRs
+    # ============================================================================
     - name: Find PRs adrift
       ansible.builtin.include_tasks: tasks/find_prs.yml
 
-    - name: Check for existing comments
-      ansible.builtin.include_tasks: tasks/check_comments.yml
+    - name: Get PR details
+      ansible.builtin.include_tasks: tasks/get_pr_details.yml
 
-    # ============================================================================
-    # Get Detailed PR Information (including CI status)
-    # ============================================================================
-    - name: Get detailed PR information using GitHub MCP
-      ansible.mcp.run_tool:
-        name: pull_request_read
-        args: >-
-          {{ {'method': 'get', 'owner': repo_owner,
-          'repo': repo_name, 'pullNumber': pr_number} }}
-      delegate_to: github-mcp-server
-      loop: "{{ prs_needing_comments | default([]) }}"
-      loop_control:
-        loop_var: pr_number
-        label: "PR #{{ pr_number }}"
-      register: pr_details
-      when: has_prs_needing_comments
+    - name: Get PR comments
+      ansible.builtin.include_tasks: tasks/get_pr_comments.yml
 
-    - name: Parse detailed PR results
-      ansible.builtin.set_fact:
-        pr_details_map: >-
-          {{ pr_details_map | default({}) |
-          combine({item.pr_number: item.content | parse_mcp_json}) }}
-      loop: "{{ pr_details.results | default([]) }}"
-      loop_control:
-        label: "PR #{{ item.pr_number }}"
-      when: pr_details is defined and not item.failed | default(false)
-
-    - name: Only comment on PRs with successfully loaded details
-      ansible.builtin.set_fact:
-        prs_to_comment: >-
-          {{ (prs_needing_comments | default([])) |
-          select('in', pr_details_map | default({})) | list }}
-        has_prs_to_comment: >-
-          {{ ((prs_needing_comments | default([])) |
-          select('in', pr_details_map | default({})) |
-          list | length) > 0 }}
-      when: has_prs_needing_comments
+    - name: Filter PRs by activity and whale shark comments
+      ansible.builtin.include_tasks: tasks/filter_prs.yml
 
     # ============================================================================
     # Check Ocean Conditions (GitHub Platform Status)
@@ -95,23 +66,25 @@
     # ============================================================================
     # Post Migration Report Comment on Each PR
     # ============================================================================
-    - name: Post migration status comment on PR
+    - name: Post migration status comment on PR using GitHub MCP
       ansible.mcp.run_tool:
         name: add_issue_comment
         args: >-
           {{ {'owner': repo_owner, 'repo': repo_name,
-          'issue_number': pr_number, 'body': comment_body} }}
+          'issue_number': pr_number | int, 'body': comment_body} }}
       delegate_to: github-mcp-server
       loop: "{{ prs_to_comment | default([]) }}"
       loop_control:
         loop_var: pr_number
         label: "PR #{{ pr_number }}"
-      when: has_prs_to_comment | default(false) and pr_details_map is defined
+      when: 
+        - has_prs_to_comment | default(false)
+        - pr_details_map is defined
+        - pr_activity_map is defined
       vars:
-        updated_date: "{{ pr_details_map[pr_number].updated_at[:10] }}"
-        days_adrift: >-
-          {{ lookup('pipe', 'echo $(( ( $(date +%s) - $(date -d ' +
-          updated_date + ' +%s) ) / 86400 ))') }}
+        days_adrift: "{{ pr_activity_map[pr_number].days_since_creation }}"
+        days_since_activity: >-
+          {{ pr_activity_map[pr_number].days_since_activity }}
         comment_body: "{{ lookup('template', 'templates/pr_comment.j2') }}"
 
     # ============================================================================

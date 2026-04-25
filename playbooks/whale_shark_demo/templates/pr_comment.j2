@@ -5,6 +5,7 @@ Your PR is migrating through the review ocean!
 Ocean Conditions: {{ ocean_conditions[platform_status.status.indicator] | default('Unknown ocean conditions') }}
 Current Location: {{ status_locations[pr_details_map[pr_number].mergeable_state] | default('🌊 unknown waters') }}
 Days adrift: 📅 {{ days_adrift }} days
+Last spotted: 🔭 {{ days_since_activity }} days ago
 
 🦈 Whale Shark Wisdom:
   > _"{{ zen_quote | default('Keep swimming!') }}"_

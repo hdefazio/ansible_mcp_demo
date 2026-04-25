@@ -99,9 +99,11 @@ The `whale_shark_demo/whale-shark-pr-migration.yml` playbook showcases both MCP 
 ### What It Does
 
 Like a whale shark filtering through the ocean, this playbook:
-- **Checks Ocean Conditions**: Monitors GitHub platform status using Fetch MCP
-- **Finds PRs Adrift**: Searches for pull requests that haven't been updated in N days
+- **Pre-filters with GitHub Search**: Finds old PRs without recent updates (created 7+ days ago, updated 1+ days ago)
+- **Tracks Real Activity**: Distinguishes between whale shark comments and actual work (commits or human comments)
+- **Combined Filtering**: Single-pass filtering by both real activity and whale shark comment recency
 - **Analyzes PR Health**: Identifies PRs with failing CI or merge conflicts
+- **Checks Ocean Conditions**: Monitors GitHub platform status using Fetch MCP
 - **Provides Wisdom**: Posts GitHub Zen wisdom and navigation tips as PR comments
 - **Idempotent**: Only posts comments once per week to avoid spam
 
@@ -114,10 +116,17 @@ Edit `playbooks/whale_shark_demo/vars.yml` to target your repository:
 repo_owner: "your-org"
 repo_name: "your-repo"
 
-# Threshold settings
-days_adrift_threshold: 3         # Days without updates
-comment_freshness_days: 7        # Only post if we haven't commented in this many days
+# Threshold settings (inclusive - >= not just >)
+days_created_threshold: 7   # PR must be at least this old
+days_last_activity_threshold: 3   # GitHub search pre-filter: updated >= N days ago
+                                   # Also used for real activity filtering
+                                   # (real activity = commits or non-whale-shark comments)
+comment_freshness_days: 7   # Re-comment if last whale shark comment is at least N days old
 ```
+
+**Note:** The playbook uses `days_last_activity_threshold` for both:
+1. **GitHub search pre-filtering** - excludes PRs updated in the last N days (reduces API calls)
+2. **Real activity filtering** - excludes PRs with real work (commits/human comments) in last N days
 
 ### Usage
 
@@ -135,6 +144,7 @@ Your PR is migrating through the review ocean!
 Ocean Conditions: 🌊 Calm seas - All GitHub systems operational
 Current Location: 🦑 tangled in kelp (blocked)
 Days adrift: 📅 21 days
+Last spotted: 🔭 7 days ago
 
 🦈 Whale Shark Wisdom:
   > "Half measures are as bad as nothing at all."

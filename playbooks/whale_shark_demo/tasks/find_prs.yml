@@ -8,7 +8,9 @@
     args:
       query: >-
         repo:{{ repo_owner }}/{{ repo_name }}
-        is:pr is:open -is:draft updated:<{{ threshold_date }}
+        is:pr is:open -is:draft
+        created:<={{ created_threshold_date }}
+        updated:<={{ last_activity_threshold_date }}
   delegate_to: github-mcp-server
   register: adrift_prs
 
@@ -23,5 +25,6 @@
 - name: Display PRs adrift
   ansible.builtin.debug:
     msg: >-
-      🦈 {{ pr_list.get('items', []) | length }} PR(s) adrift
-      (no updates in {{ days_adrift_threshold }} days)
+      🦈 {{ pr_list.get('items', []) | length }} PR(s) found
+      (created {{ days_created_threshold }}+ days ago,
+      updated {{ days_last_activity_threshold }}+ days ago)
