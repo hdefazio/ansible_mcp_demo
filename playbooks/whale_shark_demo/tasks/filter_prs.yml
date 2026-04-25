@@ -5,6 +5,10 @@
 # Input: pr_list, pr_details_map, pr_comments
 # Output: prs_to_comment, pr_activity_map
 
+- name: Get current timestamp for date calculations
+  ansible.builtin.set_fact:
+    current_timestamp: "{{ lookup('pipe', 'date +%s') }}"
+
 - name: Calculate activity and filter PRs
   ansible.builtin.set_fact:
     pr_activity_map: >-
@@ -28,7 +32,8 @@
     all_comments: >-
       {{ pr_comments.results |
       selectattr('item.number', 'equalto', pr_number | int) |
-      map(attribute='content') | first | parse_mcp_json }}
+      map(attribute='content') | list |
+      first | default('[]') | parse_mcp_json }}
 
     # Filter whale shark vs non-whale shark comments
     whale_shark_comments: >-
@@ -58,16 +63,20 @@
       first).created_at if whale_shark_comments | length > 0
       else '' }}
 
-    # Calculate days
+    # Calculate days (using cached current_timestamp)
+    created_timestamp: >-
+      {{ lookup('pipe', 'date -d "' + created_date + '" +%s') }}
+    activity_timestamp: >-
+      {{ lookup('pipe', 'date -d "' + last_real_activity + '" +%s') }}
+    whale_shark_timestamp: >-
+      {{ lookup('pipe', 'date -d "' + last_whale_shark_date + '" +%s')
+      if last_whale_shark_date else '0' }}
     days_since_creation: >-
-      {{ lookup('pipe', 'echo $(( ( $(date +%s) - $(date -d "' +
-      created_date + '" +%s) ) / 86400 ))') }}
+      {{ ((current_timestamp | int - created_timestamp | int) / 86400) | int }}
     days_since_activity: >-
-      {{ lookup('pipe', 'echo $(( ( $(date +%s) - $(date -d "' +
-      last_real_activity + '" +%s) ) / 86400 ))') }}
+      {{ ((current_timestamp | int - activity_timestamp | int) / 86400) | int }}
     days_since_whale_shark: >-
-      {{ lookup('pipe', 'echo $(( ( $(date +%s) - $(date -d "' +
-      last_whale_shark_date + '" +%s) ) / 86400 ))')
+      {{ ((current_timestamp | int - whale_shark_timestamp | int) / 86400) | int
       if last_whale_shark_date else 999 }}
 
     # Determine if we should include this PR
