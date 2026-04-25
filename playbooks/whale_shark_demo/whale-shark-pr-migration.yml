@@ -12,11 +12,8 @@
     - name: Find PRs adrift
       ansible.builtin.include_tasks: tasks/find_prs.yml
 
-    - name: Get PR details
+    - name: Get PR details and comments
       ansible.builtin.include_tasks: tasks/get_pr_details.yml
-
-    - name: Get PR comments
-      ansible.builtin.include_tasks: tasks/get_pr_comments.yml
 
     - name: Filter PRs by activity and whale shark comments
       ansible.builtin.include_tasks: tasks/filter_prs.yml
@@ -77,7 +74,7 @@
       loop_control:
         loop_var: pr_number
         label: "PR #{{ pr_number }}"
-      when: 
+      when:
         - has_prs_to_comment | default(false)
         - pr_details_map is defined
         - pr_activity_map is defined

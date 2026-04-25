@@ -1,7 +1,10 @@
 ---
 # ============================================================================
-# Get PR Details
+# Get PR Details and Comments
 # ============================================================================
+# Input: pr_list
+# Output: pr_details_map, pr_comments
+
 - name: Get detailed PR information using GitHub MCP
   ansible.mcp.run_tool:
     name: pull_request_read
@@ -24,3 +27,16 @@
   loop_control:
     label: "PR #{{ item.item.number }}"
   when: pr_details is defined and not item.failed | default(false)
+
+- name: Get PR comments using GitHub MCP
+  ansible.mcp.run_tool:
+    name: pull_request_read
+    args: >-
+      {{ {'method': 'get_comments', 'owner': repo_owner,
+      'repo': repo_name, 'pullNumber': item.number} }}
+  delegate_to: github-mcp-server
+  loop: "{{ pr_list.get('items', []) }}"
+  loop_control:
+    label: "PR #{{ item.number }}"
+  register: pr_comments
+  when: has_prs
