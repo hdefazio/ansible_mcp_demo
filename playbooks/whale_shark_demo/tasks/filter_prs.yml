@@ -30,11 +30,12 @@
     created_date: "{{ pr_details_map[pr_number].created_at }}"
 
     # Get all comments for this PR
-    all_comments: >-
+    all_comments_raw: >-
       {{ pr_comments.results |
       selectattr('item.number', 'equalto', pr_number | int) |
-      map(attribute='content') | list |
-      first | default('[]') | parse_mcp_json }}
+      map(attribute='content') | list | first | default([]) }}
+    all_comments: >-
+      {{ all_comments_raw | parse_mcp_json if all_comments_raw else [] }}
 
     # Filter whale shark vs non-whale shark comments
     whale_shark_comments: >-
@@ -77,11 +78,14 @@
 
     # Calculate days using datetime filters (no shell injection risk)
     created_timestamp: >-
-      {{ (created_date | to_datetime('%Y-%m-%dT%H:%M:%SZ')).strftime('%s') }}
+      {{ (created_date |
+      to_datetime('%Y-%m-%dT%H:%M:%SZ')).strftime('%s') }}
     activity_timestamp: >-
-      {{ (last_real_activity | to_datetime('%Y-%m-%dT%H:%M:%SZ')).strftime('%s') }}
+      {{ (last_real_activity |
+      to_datetime('%Y-%m-%dT%H:%M:%SZ')).strftime('%s') }}
     whale_shark_timestamp: >-
-      {{ (last_whale_shark_date | to_datetime('%Y-%m-%dT%H:%M:%SZ')).strftime('%s')
+      {{ (last_whale_shark_date |
+      to_datetime('%Y-%m-%dT%H:%M:%SZ')).strftime('%s')
       if last_whale_shark_date else '0' }}
     days_since_creation: >-
       {{ ((current_timestamp | int - created_timestamp | int) / 86400) | int }}
