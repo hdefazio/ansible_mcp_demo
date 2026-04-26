@@ -21,10 +21,9 @@ def parse_mcp_json(content):
         return {}
 
     try:
-        text = content[0].get('text', '')
-        # Extract JSON object or array from text (handles text before/after JSON)
-        # Try to match JSON object {...} or array [...]
-        match = re.search(r'[\{\[].*[\}\]]', text, re.MULTILINE | re.DOTALL)
+        text = content[0].get("text", "")
+
+        match = re.search(r"[\{\[].*[\}\]]", text, re.MULTILINE | re.DOTALL)
         if match:
             return json.loads(match.group(0))
     except (AttributeError, ValueError, json.JSONDecodeError):
@@ -37,6 +36,4 @@ class FilterModule(object):
     """Ansible filter plugin for MCP response parsing."""
 
     def filters(self):
-        return {
-            'parse_mcp_json': parse_mcp_json
-        }
+        return {"parse_mcp_json": parse_mcp_json}

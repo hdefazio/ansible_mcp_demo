@@ -69,11 +69,11 @@
         that:
           - prs_to_comment | default([]) | length <= max_prs_per_run
         fail_msg: >-
-          🚨 Safety limit exceeded: {{ prs_to_comment | length }} PRs would be
+          🚨 Safety limit exceeded: {{ prs_to_comment | default([]) | length }} PRs would be
           commented on, but max_prs_per_run is {{ max_prs_per_run }}.
           Check your threshold settings in vars.yml to avoid spam.
         success_msg: >-
-          ✓ Safety check passed: {{ prs_to_comment | length }} PR(s)
+          ✓ Safety check passed: {{ prs_to_comment | default([]) | length }} PR(s)
           within limit of {{ max_prs_per_run }}
       when: has_prs_to_comment | default(false)
 
