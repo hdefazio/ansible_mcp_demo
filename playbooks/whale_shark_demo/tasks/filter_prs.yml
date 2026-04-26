@@ -2,7 +2,7 @@
 # ============================================================================
 # Filter PRs (Combined: Real Activity + Whale Shark Comment Recency)
 # ============================================================================
-# Input: pr_list, pr_details_map, pr_commits_map, pr_comments_map
+# Input: pr_details_map, pr_commits_map, pr_comments_map
 # Output: prs_to_comment, pr_activity_map
 # Real activity = max(last_commit_date, last_human_comment_date)
 
@@ -14,26 +14,21 @@
   ansible.builtin.set_fact:
     pr_activity_map: >-
       {{ pr_activity_map |
-      combine({pr_number: activity_data}) }}
-    prs_to_comment_temp: >-
-      {{ prs_to_comment_temp | default([]) +
-      ([pr_number] if include_pr else []) }}
-  loop: "{{ pr_list.get('items', []) }}"
+      combine({item.key: activity_data}) }}
+    prs_to_comment: >-
+      {{ prs_to_comment +
+      ([item.key] if include_pr else []) }}
+    has_prs_to_comment: >-
+      {{ (prs_to_comment + ([item.key] if include_pr else [])) | length > 0 }}
+  loop: "{{ pr_details_map | dict2items }}"
   loop_control:
-    loop_var: pr_item
-    label: "PR #{{ pr_item.number }}"
+    label: "PR #{{ item.key }}"
   when:
     - has_prs
-    - pr_item.number | string in pr_details_map
-    - pr_comments_map is defined
-    - pr_commits_map is defined
   vars:
-    pr_number: "{{ pr_item.number | string }}"
-    created_date: "{{ pr_details_map[pr_number].created_at }}"
-
-    # Get all comments for this PR (from pre-built map for O(1) lookup)
+    # Get all comments for this PR
     all_comments: >-
-      {{ pr_comments_map.get(pr_number, []) }}
+      {{ pr_comments_map.get(item.key, []) }}
 
     # Filter whale shark vs non-whale shark comments
     whale_shark_comments: >-
@@ -45,28 +40,28 @@
       rejectattr('body', 'search', '🦈.*Whale Shark PR Migration Status') |
       list }}
 
-    # Calculate whale shark comment recency (O(n) using max instead of O(n log n) sort)
+    # Calculate whale shark comment recency
     last_whale_shark_date: >-
       {{ whale_shark_comments | map(attribute='created_at') | max
       if whale_shark_comments | length > 0 else '' }}
 
-    # Get commits for this PR (from pre-built map for O(1) lookup)
+    # Get commits for this PR
     pr_commits: >-
-      {{ pr_commits_map.get(pr_number, []) }}
+      {{ pr_commits_map.get(item.key, []) }}
     last_commit_date: >-
       {{ pr_commits | map(attribute='commit.author.date') | max
-      if pr_commits | length > 0 else created_date }}
+      if pr_commits | length > 0 else item.value.created_at }}
 
     # Calculate last real activity (commits OR non-whale-shark comments)
     last_non_whale_comment_date: >-
       {{ non_whale_shark_comments | map(attribute='created_at') | max
-      if non_whale_shark_comments | length > 0 else created_date }}
+      if non_whale_shark_comments | length > 0 else item.value.created_at }}
     last_real_activity: >-
       {{ [last_commit_date | trim, last_non_whale_comment_date | trim] | max }}
 
-    # Calculate days using datetime filters (no shell injection risk)
+    # Calculate days since activity
     created_timestamp: >-
-      {{ (created_date |
+      {{ (item.value.created_at |
       to_datetime('%Y-%m-%dT%H:%M:%SZ')).strftime('%s') }}
     activity_timestamp: >-
       {{ (last_real_activity |
@@ -93,16 +88,10 @@
       {{ meets_activity_threshold and meets_whale_shark_threshold }}
 
     activity_data:
-      created_at: "{{ created_date }}"
+      created_at: "{{ item.value.created_at }}"
       last_real_activity: "{{ last_real_activity }}"
       days_since_creation: "{{ days_since_creation }}"
       days_since_activity: "{{ days_since_activity }}"
-
-- name: Set final prs_to_comment list
-  ansible.builtin.set_fact:
-    prs_to_comment: "{{ prs_to_comment_temp | default([]) }}"
-    has_prs_to_comment: >-
-      {{ prs_to_comment_temp | default([]) | length > 0 }}
 
 - name: Display filtered PRs
   ansible.builtin.debug:

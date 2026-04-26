@@ -2,7 +2,7 @@
 # ============================================================================
 # Get PR Details, Commits, and Comments
 # ============================================================================
-# Input: pr_list
+# Input: pr_search_results
 # Output: pr_details_map, pr_commits_map, pr_comments_map
 
 - name: Get detailed PR information using GitHub MCP
@@ -12,13 +12,13 @@
       {{ {'method': 'get', 'owner': repo_owner,
       'repo': repo_name, 'pullNumber': item.number} }}
   delegate_to: github-mcp-server
-  loop: "{{ pr_list.get('items', []) }}"
+  loop: "{{ pr_search_results }}"
   loop_control:
     label: "PR #{{ item.number }}"
   register: pr_details
   when: has_prs
 
-- name: Parse detailed PR results
+- name: Build detailed pr lookup map
   ansible.builtin.set_fact:
     pr_details_map: >-
       {{ pr_details_map |
@@ -26,64 +26,57 @@
   loop: "{{ pr_details.results | default([]) }}"
   loop_control:
     label: "PR #{{ item.item.number }}"
-  when: pr_details is defined and not item.failed | default(false)
+  when: pr_details is defined and not item.failed
 
 - name: Get PR commits using GitHub MCP
   ansible.mcp.run_tool:
     name: list_commits
     args: >-
       {{ {'owner': repo_owner, 'repo': repo_name,
-      'sha': pr_details_map[pr_number].head.ref} }}
+      'sha': item.value.head.ref} }}
   delegate_to: github-mcp-server
-  loop: "{{ pr_list.get('items', []) }}"
+  loop: "{{ pr_details_map | dict2items }}"
   loop_control:
-    label: "PR #{{ item.number }}"
+    label: "PR #{{ item.key }}"
   register: pr_commits_list
-  vars:
-    pr_number: "{{ item.number | string }}"
   when:
     - has_prs
-    - pr_number in pr_details_map
-    - pr_details_map[pr_number].head is defined
-    - pr_details_map[pr_number].head.ref is defined
+    - item.value.head is defined
+    - item.value.head.ref is defined
 
 - name: Build commits lookup map
   ansible.builtin.set_fact:
     pr_commits_map: >-
       {{ pr_commits_map |
-      combine({item.item.number | string: item.content | parse_mcp_json}) }}
+      combine({item.item.key: item.content | parse_mcp_json}) }}
   loop: "{{ pr_commits_list.results | default([]) }}"
   loop_control:
-    label: "PR #{{ item.item.number }}"
+    label: "PR #{{ item.item.key }}"
   when:
     - pr_commits_list is defined
-    - not item.failed | default(false)
+    - not item.failed
 
 - name: Get PR comments using GitHub MCP
   ansible.mcp.run_tool:
     name: pull_request_read
     args: >-
       {{ {'method': 'get_comments', 'owner': repo_owner,
-      'repo': repo_name, 'pullNumber': item.number} }}
+      'repo': repo_name, 'pullNumber': item.key | int} }}
   delegate_to: github-mcp-server
-  loop: "{{ pr_list.get('items', []) }}"
+  loop: "{{ pr_details_map | dict2items }}"
   loop_control:
-    label: "PR #{{ item.number }}"
+    label: "PR #{{ item.key }}"
   register: pr_comments
-  vars:
-    pr_number: "{{ item.number | string }}"
-  when:
-    - has_prs
-    - pr_number in pr_details_map
+  when: has_prs
 
 - name: Build comments lookup map
   ansible.builtin.set_fact:
     pr_comments_map: >-
       {{ pr_comments_map |
-      combine({item.item.number | string: item.content | parse_mcp_json}) }}
+      combine({item.item.key: item.content | parse_mcp_json}) }}
   loop: "{{ pr_comments.results | default([]) }}"
   loop_control:
-    label: "PR #{{ item.item.number }}"
+    label: "PR #{{ item.item.key }}"
   when:
     - pr_comments is defined
-    - not item.failed | default(false)
+    - not item.failed

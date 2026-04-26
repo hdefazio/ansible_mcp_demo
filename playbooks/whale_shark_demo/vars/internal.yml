@@ -8,7 +8,7 @@
 has_prs: false
 has_prs_to_comment: false
 prs_to_comment: []
-pr_list: {}
+pr_search_results: []
 pr_details_map: {}
 pr_commits_map: {}
 pr_comments_map: {}
