@@ -75,13 +75,13 @@
     last_real_activity: >-
       {{ [last_commit_date | trim, last_non_whale_comment_date | trim] | max }}
 
-    # Calculate days (using cached current_timestamp)
+    # Calculate days using datetime filters (no shell injection risk)
     created_timestamp: >-
-      {{ lookup('pipe', 'date -d "' + created_date + '" +%s') }}
+      {{ (created_date | to_datetime('%Y-%m-%dT%H:%M:%SZ')).strftime('%s') }}
     activity_timestamp: >-
-      {{ lookup('pipe', 'date -d "' + last_real_activity + '" +%s') }}
+      {{ (last_real_activity | to_datetime('%Y-%m-%dT%H:%M:%SZ')).strftime('%s') }}
     whale_shark_timestamp: >-
-      {{ lookup('pipe', 'date -d "' + last_whale_shark_date + '" +%s')
+      {{ (last_whale_shark_date | to_datetime('%Y-%m-%dT%H:%M:%SZ')).strftime('%s')
       if last_whale_shark_date else '0' }}
     days_since_creation: >-
       {{ ((current_timestamp | int - created_timestamp | int) / 86400) | int }}
