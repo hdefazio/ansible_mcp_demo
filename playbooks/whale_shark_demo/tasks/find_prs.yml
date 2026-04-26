@@ -1,16 +1,15 @@
 ---
 # ============================================================================
-# Find PRs Adrift (Search for stale pull requests)
+# Find Open PRs (search all open, non-draft pull requests)
 # ============================================================================
-- name: Find PRs adrift using GitHub MCP
+# Output: pr_list, has_prs
+- name: Find open PRs using GitHub MCP
   ansible.mcp.run_tool:
     name: search_pull_requests
     args:
       query: >-
         repo:{{ repo_owner }}/{{ repo_name }}
         is:pr is:open -is:draft
-        created:<={{ created_threshold_date }}
-        updated:<={{ last_activity_threshold_date }}
   delegate_to: github-mcp-server
   register: adrift_prs
 
@@ -25,6 +24,4 @@
 - name: Display PRs adrift
   ansible.builtin.debug:
     msg: >-
-      🦈 {{ pr_list.get('items', []) | length }} PR(s) found
-      (created {{ days_created_threshold }}+ days ago,
-      updated {{ days_last_activity_threshold }}+ days ago)
+      🦈 {{ pr_list.get('items', []) | length }} open PR(s) found

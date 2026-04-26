@@ -99,13 +99,13 @@ The `whale_shark_demo/whale-shark-pr-migration.yml` playbook showcases both MCP 
 ### What It Does
 
 Like a whale shark filtering through the ocean, this playbook:
-- **Pre-filters with GitHub Search**: Finds old PRs without recent updates (created 7+ days ago, updated 1+ days ago)
+- **Finds All Open PRs**: Uses GitHub search to get all open, non-draft PRs
 - **Tracks Real Activity**: Distinguishes between whale shark comments and actual work (commits or human comments)
-- **Combined Filtering**: Single-pass filtering by both real activity and whale shark comment recency
+- **Smart Filtering**: Single-pass filtering by both real activity and whale shark comment recency
 - **Analyzes PR Health**: Identifies PRs with failing CI or merge conflicts
 - **Checks Ocean Conditions**: Monitors GitHub platform status using Fetch MCP
 - **Provides Wisdom**: Posts GitHub Zen wisdom and navigation tips as PR comments
-- **Idempotent**: Only posts comments once per week to avoid spam
+- **Idempotent**: Only re-comments after a configurable period to avoid spam
 
 ### Configuration
 
@@ -117,16 +117,20 @@ repo_owner: "your-org"
 repo_name: "your-repo"
 
 # Threshold settings (inclusive - >= not just >)
-days_created_threshold: 7   # PR must be at least this old
-days_last_activity_threshold: 3   # GitHub search pre-filter: updated >= N days ago
-                                   # Also used for real activity filtering
-                                   # (real activity = commits or non-whale-shark comments)
-comment_freshness_days: 7   # Re-comment if last whale shark comment is at least N days old
+days_last_activity_threshold: 5   # No commits OR human comments in N+ days
+comment_freshness_days: 7   # Re-comment if last whale shark comment is N+ days old
 ```
 
-**Note:** The playbook uses `days_last_activity_threshold` for both:
-1. **GitHub search pre-filtering** - excludes PRs updated in the last N days (reduces API calls)
-2. **Real activity filtering** - excludes PRs with real work (commits/human comments) in last N days
+**How it works:**
+1. **GitHub search** finds all open, non-draft PRs
+2. **Fetch details** gets PR metadata, comments, and commit history for each PR
+3. **Real activity filter** includes PRs with no real activity (commits OR human comments) in N+ days
+4. **Comment freshness** prevents re-commenting too frequently (whale shark comments don't count as activity)
+
+**Real activity** = latest of:
+- Last commit pushed to the PR branch
+- Last non-whale-shark comment (reviews, questions, etc.)
+- PR creation date (if no commits or comments)
 
 ### Usage
 

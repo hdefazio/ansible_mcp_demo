@@ -12,7 +12,7 @@
     - name: Find PRs adrift
       ansible.builtin.include_tasks: tasks/find_prs.yml
 
-    - name: Get PR details and comments
+    - name: Get PR details, commits, and comments
       ansible.builtin.include_tasks: tasks/get_pr_details.yml
 
     - name: Filter PRs by activity and whale shark comments

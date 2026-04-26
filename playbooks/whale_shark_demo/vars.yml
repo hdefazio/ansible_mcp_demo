@@ -4,17 +4,8 @@ repo_owner: "hdefazio"
 repo_name: "ansible_mcp_demo"
 
 # Threshold settings
-days_created_threshold: 7   # PR must be at least this old
-days_last_activity_threshold: 3   # No real activity for at least this many days
+days_last_activity_threshold: 5   # No real activity for at least this many days
 comment_freshness_days: 7   # Re-comment if comment >= N days old
-
-# Calculated dates (these use the thresholds above)
-created_threshold_date: >-
-  {{ lookup('pipe', 'date -d "' + days_created_threshold|string +
-  ' days ago" +%Y-%m-%dT23:59:59Z') }}
-last_activity_threshold_date: >-
-  {{ lookup('pipe', 'date -d "' + days_last_activity_threshold|string +
-  ' days ago" +%Y-%m-%dT23:59:59Z') }}
 
 # Ocean-themed status mapping
 ocean_conditions:
