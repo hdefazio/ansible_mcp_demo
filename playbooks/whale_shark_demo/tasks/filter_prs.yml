@@ -13,7 +13,7 @@
 - name: Calculate activity and filter PRs
   ansible.builtin.set_fact:
     pr_activity_map: >-
-      {{ pr_activity_map | default({}) |
+      {{ pr_activity_map |
       combine({pr_number: activity_data}) }}
     prs_to_comment_temp: >-
       {{ prs_to_comment_temp | default([]) +
@@ -102,13 +102,12 @@
   ansible.builtin.set_fact:
     prs_to_comment: "{{ prs_to_comment_temp | default([]) }}"
     has_prs_to_comment: >-
-      {{ prs_to_comment_temp is defined and
-      prs_to_comment_temp | length > 0 }}
+      {{ prs_to_comment_temp | default([]) | length > 0 }}
 
 - name: Display filtered PRs
   ansible.builtin.debug:
     msg: >-
-      🦈 {{ prs_to_comment | default([]) | length }} PR(s) to comment on
+      🦈 {{ prs_to_comment | length }} PR(s) to comment on
       (real activity {{ days_last_activity_threshold }}+ days ago,
       no whale shark comment in {{ comment_freshness_days }}+ days)
   when: has_prs

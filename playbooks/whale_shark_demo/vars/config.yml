@@ -1,0 +1,13 @@
+---
+# ============================================================================
+# USER CONFIGURATION - Edit these values for your repository
+# ============================================================================
+
+# Repository to monitor
+repo_owner: "hdefazio"
+repo_name: "ansible_mcp_demo"
+
+# Activity thresholds
+days_last_activity_threshold: 5   # Comment on PRs with no activity for N+ days
+comment_freshness_days: 7         # Wait N days before re-commenting
+max_prs_per_run: 10              # Safety limit to prevent spam

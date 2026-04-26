@@ -110,17 +110,17 @@ Like a whale shark filtering through the ocean, this playbook:
 
 ### Configuration
 
-Edit `playbooks/whale_shark_demo/vars.yml` to target your repository:
+Edit `playbooks/whale_shark_demo/vars/config.yml` to target your repository:
 
 ```yaml
-# Repository configuration
+# Repository to monitor
 repo_owner: "your-org"
 repo_name: "your-repo"
 
-# Threshold settings (inclusive - >= not just >)
-days_last_activity_threshold: 5   # No commits OR human comments in N+ days
-comment_freshness_days: 7   # Re-comment if last whale shark comment is N+ days old
-max_prs_per_run: 10   # Safety limit: refuse to comment on more than this many PRs
+# Activity thresholds
+days_last_activity_threshold: 5   # Comment on PRs with no activity for N+ days
+comment_freshness_days: 7         # Wait N days before re-commenting
+max_prs_per_run: 10              # Safety limit to prevent spam
 ```
 
 **How it works:**

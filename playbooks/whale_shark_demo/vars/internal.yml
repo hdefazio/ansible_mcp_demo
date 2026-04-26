@@ -1,0 +1,32 @@
+---
+# ============================================================================
+# INTERNAL VARIABLES - Do not edit
+# ============================================================================
+
+# These are initialized to prevent undefined variable errors.
+# They will be populated during playbook execution.
+has_prs: false
+has_prs_to_comment: false
+prs_to_comment: []
+pr_list: {}
+pr_details_map: {}
+pr_commits_map: {}
+pr_comments_map: {}
+pr_activity_map: {}
+
+# Ocean-themed status messages
+# Maps GitHub platform status indicators to ocean metaphors
+ocean_conditions:
+  none: "🌊 Calm seas - All GitHub systems operational"
+  minor: "🌀 Choppy waters - Minor GitHub issues detected"
+  major: "⛈️ Storm warning - Major GitHub outages"
+  critical: "🌪️ Hurricane conditions - Critical GitHub outages"
+
+# Maps PR mergeable states to ocean metaphors
+status_locations:
+  open: "🌊 open waters"
+  unstable: "🪸 coral reef (failing CI)"
+  dirty: "🪨 rocky shoals (merge conflicts)"
+  behind: "🌀 caught in currents (behind main)"
+  blocked: "🦑 tangled in kelp (blocked)"
+  clean: "🐠 clear waters (ready to merge)"

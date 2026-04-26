@@ -21,7 +21,7 @@
 - name: Parse detailed PR results
   ansible.builtin.set_fact:
     pr_details_map: >-
-      {{ pr_details_map | default({}) |
+      {{ pr_details_map |
       combine({item.item.number | string: item.content | parse_mcp_json}) }}
   loop: "{{ pr_details.results | default([]) }}"
   loop_control:
@@ -50,7 +50,7 @@
 - name: Build commits lookup map
   ansible.builtin.set_fact:
     pr_commits_map: >-
-      {{ pr_commits_map | default({}) |
+      {{ pr_commits_map |
       combine({item.item.number | string: item.content | parse_mcp_json}) }}
   loop: "{{ pr_commits_list.results | default([]) }}"
   loop_control:
@@ -79,7 +79,7 @@
 - name: Build comments lookup map
   ansible.builtin.set_fact:
     pr_comments_map: >-
-      {{ pr_comments_map | default({}) |
+      {{ pr_comments_map |
       combine({item.item.number | string: item.content | parse_mcp_json}) }}
   loop: "{{ pr_comments.results | default([]) }}"
   loop_control:

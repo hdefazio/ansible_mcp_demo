@@ -3,7 +3,8 @@
   hosts: localhost
   gather_facts: false
   vars_files:
-    - vars.yml
+    - vars/internal.yml  # Internal defaults (do not edit)
+    - vars/config.yml    # User configuration (edit this)
 
   tasks:
     # ============================================================================
@@ -29,13 +30,13 @@
       delegate_to: mcp-server-fetch
       register: github_status
       failed_when: false
-      when: has_prs_to_comment | default(false)
+      when: has_prs_to_comment
 
     - name: Extract and parse JSON from fetch response
       ansible.builtin.set_fact:
         platform_status: "{{ github_status.content | parse_mcp_json }}"
       when:
-        - has_prs_to_comment | default(false)
+        - has_prs_to_comment
         - github_status is defined
         - github_status.content is defined
 
@@ -50,14 +51,14 @@
       delegate_to: mcp-server-fetch
       register: zen_wisdom
       failed_when: false
-      when: has_prs_to_comment | default(false)
+      when: has_prs_to_comment
 
     - name: Extract zen quote from response
       ansible.builtin.set_fact:
         # yamllint disable-line rule:line-length
         zen_quote: "{{ zen_wisdom.content[0].text.split('\n')[-1] if 'zen' in zen_wisdom.content[0].text else 'Keep swimming!' }}"
       when:
-        - has_prs_to_comment | default(false)
+        - has_prs_to_comment
         - zen_wisdom.content is defined
         - zen_wisdom.content | length > 0
 
@@ -67,15 +68,15 @@
     - name: Safety check - verify PR count is within limits
       ansible.builtin.assert:
         that:
-          - prs_to_comment | default([]) | length <= max_prs_per_run
+          - prs_to_comment | length <= max_prs_per_run
         fail_msg: >-
-          🚨 Safety limit exceeded: {{ prs_to_comment | default([]) | length }} PRs would be
+          🚨 Safety limit exceeded: {{ prs_to_comment | length }} PRs would be
           commented on, but max_prs_per_run is {{ max_prs_per_run }}.
           Check your threshold settings in vars.yml to avoid spam.
         success_msg: >-
-          ✓ Safety check passed: {{ prs_to_comment | default([]) | length }} PR(s)
+          ✓ Safety check passed: {{ prs_to_comment | length }} PR(s)
           within limit of {{ max_prs_per_run }}
-      when: has_prs_to_comment | default(false)
+      when: has_prs_to_comment
 
     - name: Post migration status comment on PR using GitHub MCP
       ansible.mcp.run_tool:
@@ -84,12 +85,12 @@
           {{ {'owner': repo_owner, 'repo': repo_name,
           'issue_number': pr_number | int, 'body': comment_body} }}
       delegate_to: github-mcp-server
-      loop: "{{ prs_to_comment | default([]) }}"
+      loop: "{{ prs_to_comment }}"
       loop_control:
         loop_var: pr_number
         label: "PR #{{ pr_number }}"
       when:
-        - has_prs_to_comment | default(false)
+        - has_prs_to_comment
         - pr_details_map is defined
         - pr_activity_map is defined
       vars:
@@ -106,13 +107,13 @@
         msg: |
 
           🦈 **Migration Summary** 🦈
-          {{ prs_to_comment | default([]) | length }} PRs commented on
+          {{ prs_to_comment | length }} PRs commented on
 
-          {% for pr_num in prs_to_comment | default([]) %}
+          {% for pr_num in prs_to_comment %}
           • PR {{ pr_num }}: {{ pr_details_map[pr_num].title }}
           Status: {{ status_locations[
             pr_details_map[pr_num].mergeable_state
           ] | default('🌊 unknown') }}
           {{ pr_details_map[pr_num].html_url }}
           {% endfor %}
-      when: has_prs_to_comment | default(false) and pr_details_map is defined
+      when: has_prs_to_comment and pr_details_map is defined
