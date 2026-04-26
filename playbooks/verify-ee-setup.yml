@@ -4,6 +4,9 @@
   gather_facts: false
 
   tasks:
+    # ============================================================================
+    # Check mcp_manage utility
+    # ============================================================================
     - name: Check if mcp_manage utility is available
       ansible.builtin.command: mcp_manage list
       register: mcp_manage_check
@@ -22,6 +25,9 @@
       ansible.builtin.debug:
         msg: "{{ mcp_manage_check.stdout_lines }}"
 
+    # ============================================================================
+    # Verify GitHub MCP server
+    # ============================================================================
     - name: Check if GitHub MCP server is registered
       ansible.builtin.command: mcp_manage info github-mcp-server
       register: github_mcp_info
@@ -34,6 +40,9 @@
         fail_msg: "✗ GitHub MCP server not found. Check installation."
         success_msg: "✓ GitHub MCP server is registered and available"
 
+    # ============================================================================
+    # Verify Fetch MCP server
+    # ============================================================================
     - name: Check if Fetch MCP server is registered
       ansible.builtin.command: mcp_manage info mcp-server-fetch
       register: fetch_mcp_info
@@ -46,6 +55,9 @@
         fail_msg: "✗ Fetch MCP server not found. Check installation."
         success_msg: "✓ Fetch MCP server is registered and available"
 
+    # ============================================================================
+    # Verify manifest file
+    # ============================================================================
     - name: Check MCP servers manifest file
       ansible.builtin.stat:
         path: /opt/mcp/mcpservers.json
@@ -57,6 +69,9 @@
         fail_msg: "✗ MCP manifest file not found at mcpservers.json"
         success_msg: "✓ MCP manifest file exists at mcpservers.json"
 
+    # ============================================================================
+    # Summary
+    # ============================================================================
     - name: Verification complete
       ansible.builtin.debug:
         msg:

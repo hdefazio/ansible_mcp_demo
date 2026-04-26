@@ -7,6 +7,9 @@
     ansible_mcp_server_name: github-mcp-server
 
   tasks:
+    # ============================================================================
+    # Query GitHub MCP server metadata
+    # ============================================================================
     - name: Get GitHub MCP server information
       ansible.mcp.server_info:
       register: github_server_info
@@ -15,14 +18,27 @@
       ansible.builtin.debug:
         var: github_server_info
 
+    # ============================================================================
+    # Query available tools
+    # ============================================================================
     - name: Get available tools from GitHub MCP server
       ansible.mcp.tools_info:
       register: github_tools
 
-    - name: Display available GitHub MCP tools
-      ansible.builtin.debug:
-        var: github_tools
+    #- name: Display available GitHub MCP tools
+    #  ansible.builtin.debug:
+    #    var: github_tools
 
+    - name: Display search_pull_requests tool as example
+      ansible.builtin.debug:
+        msg: >-
+          {{ github_tools.tools |
+          selectattr('name', 'equalto', 'search_pull_requests') |
+          list | first }}
+
+    # ============================================================================
+    # Summary
+    # ============================================================================
     - name: Summary
       ansible.builtin.debug:
         msg:
@@ -30,6 +46,12 @@
           - >-
             GitHub MCP Server:
             {{ github_server_info.server_info.serverInfo.name }}
+          - >-
+            Description:
+            {{
+            github_server_info.server_info.serverInfo.description |
+            default('N/A')
+            }}
           - >-
             Version:
             {{ github_server_info.server_info.serverInfo.version }}

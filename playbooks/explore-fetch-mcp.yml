@@ -7,6 +7,9 @@
     ansible_mcp_server_name: mcp-server-fetch
 
   tasks:
+    # ============================================================================
+    # Query Fetch MCP server metadata
+    # ============================================================================
     - name: Get Fetch MCP server information
       ansible.mcp.server_info:
       register: fetch_server_info
@@ -15,6 +18,9 @@
       ansible.builtin.debug:
         var: fetch_server_info
 
+    # ============================================================================
+    # Query available tools
+    # ============================================================================
     - name: Get available tools from Fetch MCP server
       ansible.mcp.tools_info:
       register: fetch_tools
@@ -23,6 +29,9 @@
       ansible.builtin.debug:
         var: fetch_tools
 
+    # ============================================================================
+    # Summary
+    # ============================================================================
     - name: Summary
       ansible.builtin.debug:
         msg:
@@ -30,6 +39,12 @@
           - >-
             Fetch MCP Server:
             {{ fetch_server_info.server_info.serverInfo.name }}
+          - >-
+            Description:
+            {{
+            fetch_server_info.server_info.serverInfo.description |
+            default('N/A')
+            }}
           - >-
             Version:
             {{ fetch_server_info.server_info.serverInfo.version }}

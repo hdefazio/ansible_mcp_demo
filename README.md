@@ -61,14 +61,14 @@ Confirms MCP servers are installed and registered:
 ansible-navigator run playbooks/verify-ee-setup.yml
 ```
 
-### Test MCP Server Functionality
+### Explore MCP Server Functionality
 
 #### GitHub MCP Server
 
 Lists server info and 38 available tools:
 
 ```bash
-ansible-navigator run playbooks/test-github-mcp.yml
+ansible-navigator run playbooks/explore-github-mcp.yml
 ```
 
 #### Fetch MCP Server
@@ -76,7 +76,7 @@ ansible-navigator run playbooks/test-github-mcp.yml
 Lists server info and available fetch tool:
 
 ```bash
-ansible-navigator run playbooks/test-fetch-mcp.yml
+ansible-navigator run playbooks/explore-fetch-mcp.yml
 ```
 
 ## Important Notes
