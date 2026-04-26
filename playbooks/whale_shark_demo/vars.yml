@@ -6,6 +6,7 @@ repo_name: "ansible_mcp_demo"
 # Threshold settings
 days_last_activity_threshold: 5   # No real activity for at least this many days
 comment_freshness_days: 7   # Re-comment if comment >= N days old
+max_prs_per_run: 10   # Safety limit: refuse to comment on more than this many PRs
 
 # Ocean-themed status mapping
 ocean_conditions:

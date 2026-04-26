@@ -106,6 +106,7 @@ Like a whale shark filtering through the ocean, this playbook:
 - **Checks Ocean Conditions**: Monitors GitHub platform status using Fetch MCP
 - **Provides Wisdom**: Posts GitHub Zen wisdom and navigation tips as PR comments
 - **Idempotent**: Only re-comments after a configurable period to avoid spam
+- **Safety Limited**: Refuses to comment on more than `max_prs_per_run` PRs to prevent accidental spam
 
 ### Configuration
 
@@ -119,6 +120,7 @@ repo_name: "your-repo"
 # Threshold settings (inclusive - >= not just >)
 days_last_activity_threshold: 5   # No commits OR human comments in N+ days
 comment_freshness_days: 7   # Re-comment if last whale shark comment is N+ days old
+max_prs_per_run: 10   # Safety limit: refuse to comment on more than this many PRs
 ```
 
 **How it works:**
