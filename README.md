@@ -1,4 +1,4 @@
-# Ansible MCP Demo
+# Ansible MCP Demo 🦈🌊
 
 Demonstrates integrating MCP (Model Context Protocol) servers into Ansible playbooks using the `ansible.mcp` and `ansible.mcp_builder` collections.
 
