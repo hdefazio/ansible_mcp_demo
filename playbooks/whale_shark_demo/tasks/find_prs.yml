@@ -16,7 +16,8 @@
 
 - name: Parse PR results
   ansible.builtin.set_fact:
-    pr_search_results: "{{ (adrift_prs.content | default([]) | parse_mcp_json).get('items', []) }}"
+    pr_search_results: >-
+      {{ (adrift_prs.content | default([]) | parse_mcp_json).get('items', []) }}
 
 - name: Check if PRs were found
   ansible.builtin.set_fact:

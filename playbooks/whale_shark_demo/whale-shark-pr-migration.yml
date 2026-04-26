@@ -55,6 +55,7 @@
 
     - name: Extract zen quote from response
       ansible.builtin.set_fact:
+        # yamllint disable-line rule:line-length
         zen_quote: "{{ zen_text.split('\n')[-1] if 'zen' in zen_text else 'Keep swimming!' }}"
       vars:
         zen_text: "{{ zen_wisdom.content[0].text | default('') }}"
