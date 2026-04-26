@@ -1,0 +1,118 @@
+---
+- name: Whale Shark PR Migration Tracker
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - vars.yml
+
+  tasks:
+    # ============================================================================
+    # Find and Filter PRs
+    # ============================================================================
+    - name: Find PRs adrift
+      ansible.builtin.include_tasks: tasks/find_prs.yml
+
+    - name: Get PR details, commits, and comments
+      ansible.builtin.include_tasks: tasks/get_pr_details.yml
+
+    - name: Filter PRs by activity and whale shark comments
+      ansible.builtin.include_tasks: tasks/filter_prs.yml
+
+    # ============================================================================
+    # Check Ocean Conditions (GitHub Platform Status)
+    # ============================================================================
+    - name: Check GitHub platform status using Fetch MCP
+      ansible.mcp.run_tool:
+        name: fetch
+        args:
+          url: https://www.githubstatus.com/api/v2/status.json
+      delegate_to: mcp-server-fetch
+      register: github_status
+      failed_when: false
+      when: has_prs_to_comment | default(false)
+
+    - name: Extract and parse JSON from fetch response
+      ansible.builtin.set_fact:
+        platform_status: "{{ github_status.content | parse_mcp_json }}"
+      when:
+        - has_prs_to_comment | default(false)
+        - github_status is defined
+        - github_status.content is defined
+
+    # ============================================================================
+    # Get GitHub Zen Wisdom
+    # ============================================================================
+    - name: Get GitHub zen wisdom using Fetch MCP
+      ansible.mcp.run_tool:
+        name: fetch
+        args:
+          url: "https://api.github.com/zen"
+      delegate_to: mcp-server-fetch
+      register: zen_wisdom
+      failed_when: false
+      when: has_prs_to_comment | default(false)
+
+    - name: Extract zen quote from response
+      ansible.builtin.set_fact:
+        # yamllint disable-line rule:line-length
+        zen_quote: "{{ zen_wisdom.content[0].text.split('\n')[-1] if 'zen' in zen_wisdom.content[0].text else 'Keep swimming!' }}"
+      when:
+        - has_prs_to_comment | default(false)
+        - zen_wisdom.content is defined
+        - zen_wisdom.content | length > 0
+
+    # ============================================================================
+    # Post Migration Report Comment on Each PR
+    # ============================================================================
+    - name: Safety check - verify PR count is within limits
+      ansible.builtin.assert:
+        that:
+          - prs_to_comment | default([]) | length <= max_prs_per_run
+        fail_msg: >-
+          🚨 Safety limit exceeded: {{ prs_to_comment | length }} PRs would be
+          commented on, but max_prs_per_run is {{ max_prs_per_run }}.
+          Check your threshold settings in vars.yml to avoid spam.
+        success_msg: >-
+          ✓ Safety check passed: {{ prs_to_comment | length }} PR(s)
+          within limit of {{ max_prs_per_run }}
+      when: has_prs_to_comment | default(false)
+
+    - name: Post migration status comment on PR using GitHub MCP
+      ansible.mcp.run_tool:
+        name: add_issue_comment
+        args: >-
+          {{ {'owner': repo_owner, 'repo': repo_name,
+          'issue_number': pr_number | int, 'body': comment_body} }}
+      delegate_to: github-mcp-server
+      loop: "{{ prs_to_comment | default([]) }}"
+      loop_control:
+        loop_var: pr_number
+        label: "PR #{{ pr_number }}"
+      when:
+        - has_prs_to_comment | default(false)
+        - pr_details_map is defined
+        - pr_activity_map is defined
+      vars:
+        days_adrift: "{{ pr_activity_map[pr_number].days_since_creation }}"
+        days_since_activity: >-
+          {{ pr_activity_map[pr_number].days_since_activity }}
+        comment_body: "{{ lookup('template', 'templates/pr_comment.j2') }}"
+
+    # ============================================================================
+    # Summary of All PRs
+    # ============================================================================
+    - name: Display summary of commented PRs
+      ansible.builtin.debug:
+        msg: |
+
+          🦈 **Migration Summary** 🦈
+          {{ prs_to_comment | default([]) | length }} PRs commented on
+
+          {% for pr_num in prs_to_comment | default([]) %}
+          • PR {{ pr_num }}: {{ pr_details_map[pr_num].title }}
+          Status: {{ status_locations[
+            pr_details_map[pr_num].mergeable_state
+          ] | default('🌊 unknown') }}
+          {{ pr_details_map[pr_num].html_url }}
+          {% endfor %}
+      when: has_prs_to_comment | default(false) and pr_details_map is defined

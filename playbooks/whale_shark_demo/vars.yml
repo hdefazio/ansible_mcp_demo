@@ -1,0 +1,24 @@
+---
+# Repository configuration
+repo_owner: "hdefazio"
+repo_name: "ansible_mcp_demo"
+
+# Threshold settings
+days_last_activity_threshold: 5   # No real activity in N+ days
+comment_freshness_days: 7   # Re-comment if comment >= N days old
+max_prs_per_run: 10   # Safety limit to prevent spam
+
+# Ocean-themed status mapping
+ocean_conditions:
+  none: "🌊 Calm seas - All GitHub systems operational"
+  minor: "🌀 Choppy waters - Minor GitHub issues detected"
+  major: "⛈️ Storm warning - Major GitHub outages"
+  critical: "🌪️ Hurricane conditions - Critical GitHub outages"
+
+status_locations:
+  open: "🌊 open waters"
+  unstable: "🪸 coral reef (failing CI)"
+  dirty: "🪨 rocky shoals (merge conflicts)"
+  behind: "🌀 caught in currents (behind main)"
+  blocked: "🦑 tangled in kelp (blocked)"
+  clean: "🐠 clear waters (ready to merge)"

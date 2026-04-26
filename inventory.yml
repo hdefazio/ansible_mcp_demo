@@ -1,0 +1,17 @@
+---
+all:
+  children:
+    mcp_servers:
+      hosts:
+        github-mcp-server:
+          ansible_connection: ansible.mcp.mcp
+          ansible_mcp_server_name: github-mcp-server
+          ansible_command_timeout: 60
+          ansible_mcp_server_env:
+            GITHUB_PERSONAL_ACCESS_TOKEN: >-
+              {{ lookup('env', 'GITHUB_PERSONAL_ACCESS_TOKEN') }}
+
+        mcp-server-fetch:
+          ansible_connection: ansible.mcp.mcp
+          ansible_mcp_server_name: mcp-server-fetch
+          ansible_command_timeout: 60
