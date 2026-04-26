@@ -59,6 +59,7 @@
       when:
         - has_prs_to_comment | default(false)
         - zen_wisdom.content is defined
+        - zen_wisdom.content | length > 0
 
     # ============================================================================
     # Post Migration Report Comment on Each PR
