@@ -61,7 +61,7 @@ Confirms MCP servers are installed and registered:
 ansible-navigator run playbooks/verify-ee-setup.yml
 ```
 
-### Test MCP Server Functionality
+### Test MCP Server Functionality 🦈
 
 #### GitHub MCP Server
 
