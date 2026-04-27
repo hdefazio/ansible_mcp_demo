@@ -1,0 +1,102 @@
+---
+# ============================================================================
+# Filter PRs (Combined: Real Activity + Whale Shark Comment Recency)
+# ============================================================================
+# Input: pr_details_map, pr_commits_map, pr_comments_map
+# Output: prs_to_comment, pr_activity_map
+# Real activity = max(last_commit_date, last_human_comment_date)
+
+- name: Get current timestamp for date calculations
+  ansible.builtin.set_fact:
+    current_timestamp: "{{ lookup('pipe', 'date +%s') }}"
+
+- name: Calculate activity and filter PRs
+  ansible.builtin.set_fact:
+    pr_activity_map: >-
+      {{ pr_activity_map |
+      combine({item.key: activity_data}) }}
+    prs_to_comment: >-
+      {{ prs_to_comment +
+      ([item.key] if include_pr else []) }}
+    has_prs_to_comment: >-
+      {{ (prs_to_comment + ([item.key] if include_pr else [])) | length > 0 }}
+  loop: "{{ pr_details_map | dict2items }}"
+  loop_control:
+    label: "PR #{{ item.key }}"
+  when:
+    - has_prs
+  vars:
+    # Get all comments for this PR
+    all_comments: >-
+      {{ pr_comments_map.get(item.key, []) }}
+
+    # Filter whale shark vs non-whale shark comments
+    whale_shark_comments: >-
+      {{ all_comments |
+      selectattr('body', 'search', '🦈.*Whale Shark PR Migration Status') |
+      list }}
+    non_whale_shark_comments: >-
+      {{ all_comments |
+      rejectattr('body', 'search', '🦈.*Whale Shark PR Migration Status') |
+      list }}
+
+    # Calculate whale shark comment recency
+    last_whale_shark_date: >-
+      {{ whale_shark_comments | map(attribute='created_at') | max
+      if whale_shark_comments | length > 0 else '' }}
+
+    # Get commits for this PR
+    pr_commits: >-
+      {{ pr_commits_map.get(item.key, []) }}
+    last_commit_date: >-
+      {{ pr_commits | map(attribute='commit.author.date') | max
+      if pr_commits | length > 0 else item.value.created_at }}
+
+    # Calculate last real activity (commits OR non-whale-shark comments)
+    last_non_whale_comment_date: >-
+      {{ non_whale_shark_comments | map(attribute='created_at') | max
+      if non_whale_shark_comments | length > 0 else item.value.created_at }}
+    last_real_activity: >-
+      {{ [last_commit_date | trim, last_non_whale_comment_date | trim] | max }}
+
+    # Calculate days since activity
+    created_timestamp: >-
+      {{ (item.value.created_at |
+      to_datetime('%Y-%m-%dT%H:%M:%SZ')).strftime('%s') }}
+    activity_timestamp: >-
+      {{ (last_real_activity |
+      to_datetime('%Y-%m-%dT%H:%M:%SZ')).strftime('%s') }}
+    whale_shark_timestamp: >-
+      {{ (last_whale_shark_date |
+      to_datetime('%Y-%m-%dT%H:%M:%SZ')).strftime('%s')
+      if last_whale_shark_date else '0' }}
+    days_since_creation: >-
+      {{ ((current_timestamp | int - created_timestamp | int) / 86400) | int }}
+    days_since_activity: >-
+      {{ ((current_timestamp | int - activity_timestamp | int) / 86400) | int }}
+    days_since_whale_shark: >-
+      {{ ((current_timestamp | int - whale_shark_timestamp | int) / 86400) | int
+      if last_whale_shark_date else 999 }}
+
+    # Determine if we should include this PR
+    meets_activity_threshold: >-
+      {{ days_since_activity | int >= days_last_activity_threshold }}
+    meets_whale_shark_threshold: >-
+      {{ whale_shark_comments | length == 0 or
+      days_since_whale_shark | int >= comment_freshness_days }}
+    include_pr: >-
+      {{ meets_activity_threshold and meets_whale_shark_threshold }}
+
+    activity_data:
+      created_at: "{{ item.value.created_at }}"
+      last_real_activity: "{{ last_real_activity }}"
+      days_since_creation: "{{ days_since_creation }}"
+      days_since_activity: "{{ days_since_activity }}"
+
+- name: Display filtered PRs
+  ansible.builtin.debug:
+    msg: >-
+      🦈 {{ prs_to_comment | length }} PR(s) to comment on
+      (real activity {{ days_last_activity_threshold }}+ days ago,
+      no whale shark comment in {{ comment_freshness_days }}+ days)
+  when: has_prs

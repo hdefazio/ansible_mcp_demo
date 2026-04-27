@@ -1,0 +1,20 @@
+🦈 **Whale Shark PR Migration Status** 🦈
+
+Your PR is migrating through the review ocean!
+
+Ocean Conditions: {{ ocean_conditions.get(platform_status.get('status', {}).get('indicator', 'none'), 'Unknown ocean conditions') if platform_status is defined and platform_status else 'Unknown ocean conditions' }}
+Current Location: {{ status_locations.get(pr_details_map[pr_number].get('mergeable_state', 'open'), '🌊 unknown waters') }}
+Days adrift: 📅 {{ days_adrift }} days
+Last spotted: 🔭 {{ days_since_activity }} days ago
+
+🦈 Whale Shark Wisdom:
+  > _"{{ zen_quote | default('Keep swimming!') }}"_
+
+🧭 **Navigation Tips:**
+1. **Check your compass** - Review the CI status and any feedback
+2. **Test the waters** - Run tests locally before pushing
+3. **Ask the school** - Request review from your team
+
+---
+_Whale sharks are the largest fish in the ocean and can migrate over 7,000 miles._
+_Your PR can make it through code review! Keep swimming! 🦈🌊_
