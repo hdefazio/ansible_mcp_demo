@@ -47,12 +47,6 @@
             GitHub MCP Server:
             {{ github_server_info.server_info.serverInfo.name }}
           - >-
-            Description:
-            {{
-            github_server_info.server_info.serverInfo.description |
-            default('N/A')
-            }}
-          - >-
             Version:
             {{ github_server_info.server_info.serverInfo.version }}
           - >-

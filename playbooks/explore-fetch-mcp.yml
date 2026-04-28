@@ -40,12 +40,6 @@
             Fetch MCP Server:
             {{ fetch_server_info.server_info.serverInfo.name }}
           - >-
-            Description:
-            {{
-            fetch_server_info.server_info.serverInfo.description |
-            default('N/A')
-            }}
-          - >-
             Version:
             {{ fetch_server_info.server_info.serverInfo.version }}
           - >-
