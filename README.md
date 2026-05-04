@@ -49,8 +49,10 @@ Then build the execution environment:
 
 ```bash
 cd ee_build
-ansible-builder build -t my-mcp-ee:latest -f execution-environment.yml -v 3
+ansible-builder build -t mcp-demo-ee:latest -f execution-environment.yml -v 3
 ```
+
+**Note:** The `mcp-demo-ee:latest` image is automatically used by ansible-navigator through the configuration in `ansible-navigator.yml`. This config file specifies the execution environment image, so you don't need to pass it explicitly with each command.
 
 ### 3. Configure Environment
 
@@ -105,7 +107,7 @@ Like a whale shark filtering through the ocean, this playbook:
 - **Analyzes PR Health**: Identifies PRs with failing CI or merge conflicts
 - **Checks Ocean Conditions**: Monitors GitHub platform status using Fetch MCP
 - **Provides Wisdom**: Posts GitHub Zen wisdom and navigation tips as PR comments
-- **Idempotent**: Only re-comments after a configurable period to avoid spam
+- **Comment Throttling**: Only re-comments after a configurable period to avoid spam
 - **Safety Limited**: Refuses to comment on more than `max_prs_per_run` PRs to prevent accidental spam
 
 ### Configuration

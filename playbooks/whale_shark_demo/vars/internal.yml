@@ -26,7 +26,7 @@ ocean_conditions:
 status_locations:
   open: "🌊 open waters"
   unstable: "🪸 coral reef (failing CI)"
-  dirty: "🪨 rocky shoals (merge conflicts)"
+  dirty: "🪨 caught on rocks (merge conflicts)"
   behind: "🌀 caught in currents (behind main)"
   blocked: "🦑 tangled in kelp (blocked)"
   clean: "🐠 clear waters (ready to merge)"
