@@ -49,10 +49,10 @@ Then build the execution environment:
 
 ```bash
 cd ee_build
-ansible-builder build -t my-mcp-ee:latest -f execution-environment.yml -v 3
+ansible-builder build -t mcp-demo-ee:latest -f execution-environment.yml -v 3
 ```
 
-**Note:** The `my-mcp-ee:latest` image is automatically used by ansible-navigator through the configuration in `ansible-navigator.yml`. This config file specifies the execution environment image, so you don't need to pass it explicitly with each command.
+**Note:** The `mcp-demo-ee:latest` image is automatically used by ansible-navigator through the configuration in `ansible-navigator.yml`. This config file specifies the execution environment image, so you don't need to pass it explicitly with each command.
 
 ### 3. Configure Environment
 

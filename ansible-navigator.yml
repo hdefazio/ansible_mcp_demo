@@ -1,7 +1,7 @@
 ---
 ansible-navigator:
   execution-environment:
-    image: localhost/my-mcp-ee:latest
+    image: localhost/mcp-demo-ee:latest
     pull:
       policy: never
     container-engine: podman
