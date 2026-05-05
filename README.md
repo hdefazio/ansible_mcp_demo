@@ -1,6 +1,6 @@
 # Ansible MCP Demo
 
-Demonstrates integrating MCP (Model Context Protocol) servers into Ansible playbooks using the `ansible.mcp` and `ansible.mcp_builder` collections.
+Demonstrates integrating MCP (Model Context Protocol) servers into Ansible playbooks using the [`ansible.mcp`](https://github.com/ansible-collections/ansible.mcp) and [`ansible.mcp_builder`](https://github.com/redhat-cop/ansible.mcp_builder) collections.
 
 ## Overview
 
@@ -31,7 +31,7 @@ Build the collection tarball from source:
 ```bash
 git clone https://github.com/hdefazio/hdefazio.mcp_fetch
 cd hdefazio.mcp_fetch
-ansible-galaxy collection build --output-path /path/to/ansible_mcp_demo/ee_build/
+ansible-galaxy collection build --output-path </path/to/ansible_mcp_demo/ee_build/>
 ```
 
 
@@ -103,7 +103,6 @@ The `whale_shark_demo/whale-shark-pr-migration.yml` playbook showcases both MCP 
 Like a whale shark filtering through the ocean, this playbook:
 - **Finds All Open PRs**: Uses GitHub search to get all open, non-draft PRs
 - **Tracks Real Activity**: Distinguishes between whale shark comments and actual work (commits or human comments)
-- **Smart Filtering**: Single-pass filtering by both real activity and whale shark comment recency
 - **Analyzes PR Health**: Identifies PRs with failing CI or merge conflicts
 - **Checks Ocean Conditions**: Monitors GitHub platform status using Fetch MCP
 - **Provides Wisdom**: Posts GitHub Zen wisdom and navigation tips as PR comments
@@ -125,17 +124,6 @@ comment_freshness_days: 7         # Wait N days before re-commenting
 max_prs_per_run: 10              # Safety limit to prevent spam
 ```
 
-**How it works:**
-1. **GitHub search** finds all open, non-draft PRs
-2. **Fetch details** gets PR metadata, comments, and commit history for each PR
-3. **Real activity filter** includes PRs with no real activity (commits OR human comments) in N+ days
-4. **Comment freshness** prevents re-commenting too frequently (whale shark comments don't count as activity)
-
-**Real activity** = latest of:
-- Last commit pushed to the PR branch
-- Last non-whale-shark comment (reviews, questions, etc.)
-- PR creation date (if no commits or comments)
-
 ### Usage
 
 ```bash
@@ -151,8 +139,8 @@ Your PR is migrating through the review ocean!
 
 Ocean Conditions: 🌊 Calm seas - All GitHub systems operational
 Current Location: 🦑 tangled in kelp (blocked)
-Days adrift: 📅 21 days
-Last spotted: 🔭 7 days ago
+Days adrift: 📅 21 day(s)
+Last spotted: 🔭 7 day(s) ago
 
 🦈 Whale Shark Wisdom:
   > "Half measures are as bad as nothing at all."
