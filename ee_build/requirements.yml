@@ -1,7 +1,9 @@
 ---
 collections:
-  - name: ansible.mcp_builder  # Includes built-in server role github_mcp
+  - name: ansible.mcp_builder
+    version: ">=1.0.0,<2.0.0"
   - name: ansible.mcp
+    version: ">=1.0.0,<2.0.0"
   - name: hdefazio.mcp_fetch
-    source: /build/configs/hdefazio-mcp_fetch-1.0.0.tar.gz
+    source: /build/configs/hdefazio-mcp_fetch-1.1.0.tar.gz
     type: file
