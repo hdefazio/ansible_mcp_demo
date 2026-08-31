@@ -116,3 +116,18 @@
           {{ pr_details_map[pr_num].html_url }}
           {% endfor %}
       when: has_prs_to_comment
+
+    # ============================================================================
+    # Surface Results for Automation Orchestrator
+    # ============================================================================
+    - name: Surface results as job artifacts
+      ansible.builtin.set_stats:
+        data:
+          total_open_prs: "{{ pr_search_results | length }}"
+          prs_commented: "{{ prs_to_comment | length }}"
+          prs_commented_details: >-
+            {{ prs_to_comment | map('extract', pr_details_map)
+            | list | to_json }}
+          platform_status: >-
+            {{ platform_status | default({}) | to_json }}
+          zen_quote: "{{ zen_quote | default('Keep swimming!') }}"

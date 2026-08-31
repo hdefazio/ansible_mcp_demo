@@ -80,7 +80,7 @@ ansible-navigator run playbooks/verify-ee-setup.yml
 
 #### GitHub MCP Server
 
-Lists server info and 38 available tools:
+Lists server info and available tools:
 
 ```bash
 ansible-navigator run playbooks/explore-github-mcp.yml
