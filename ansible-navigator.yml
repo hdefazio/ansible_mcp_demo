@@ -9,7 +9,7 @@ ansible-navigator:
       pass:
         - GITHUB_PERSONAL_ACCESS_TOKEN
       set:
-        ANSIBLE_COLLECTIONS_PATH: /usr/share/ansible/collections
+        ANSIBLE_COLLECTIONS_PATH: /usr/share/ansible/collections/this/path/is/intentionally/too/long/to/pass/yamllint
   mode: stdout
   playbook-artifact:
     enable: false
